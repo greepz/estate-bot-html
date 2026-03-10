@@ -20,19 +20,27 @@ function byId(id) {
 }
 
 const refs = {
-  userName: byId("userName"),
-  userIdBadge: byId("userIdBadge"),
-  sections: [...document.querySelectorAll(".section")],
-  listingForm: byId("listingForm"),
-  listingStatus: byId("listingStatus"),
-  listingPayloadPreview: byId("listingPayloadPreview"),
-  listingsList: byId("listingsList"),
-  listingsEmpty: byId("listingsEmpty"),
-  plansForm: byId("plansForm"),
-  plansStatus: byId("plansStatus"),
-  enhanceForm: byId("enhanceForm"),
-  enhanceStatus: byId("enhanceStatus")
-};
+    userName: document.getElementById("userName"),
+    userIdBadge: document.getElementById("userIdBadge"),
+    sections: [...document.querySelectorAll(".section")],
+  
+    listingsListScreen: document.getElementById("listingsListScreen"),
+    listingCreateScreen: document.getElementById("listingCreateScreen"),
+    openCreateListingBtn: document.getElementById("openCreateListingBtn"),
+    backToListingsBtn: document.getElementById("backToListingsBtn"),
+  
+    listingForm: document.getElementById("listingForm"),
+    listingStatus: document.getElementById("listingStatus"),
+    listingPayloadPreview: document.getElementById("listingPayloadPreview"),
+    listingsList: document.getElementById("listingsList"),
+    listingsEmpty: document.getElementById("listingsEmpty"),
+  
+    plansForm: document.getElementById("plansForm"),
+    plansStatus: document.getElementById("plansStatus"),
+  
+    enhanceForm: document.getElementById("enhanceForm"),
+    enhanceStatus: document.getElementById("enhanceStatus")
+  };
 
 if (refs.userName) refs.userName.textContent = currentUser.firstName;
 if (refs.userIdBadge) refs.userIdBadge.textContent = `userId: ${currentUser.id}`;
@@ -137,6 +145,31 @@ function buildListingPayloadFromForm() {
 function renderPayloadPreview() {
   if (!refs.listingPayloadPreview || !refs.listingForm) return;
   refs.listingPayloadPreview.textContent = JSON.stringify(buildListingPayloadFromForm(), null, 2);
+}
+
+function showListingsListScreen() {
+    if (refs.listingsListScreen) refs.listingsListScreen.classList.remove("hidden");
+    if (refs.listingCreateScreen) refs.listingCreateScreen.classList.add("hidden");
+}
+  
+  function showListingCreateScreen() {
+    if (refs.listingsListScreen) refs.listingsListScreen.classList.add("hidden");
+    if (refs.listingCreateScreen) refs.listingCreateScreen.classList.remove("hidden");
+}
+
+function bindListingInternalNavigation() {
+  if (refs.openCreateListingBtn) {
+    refs.openCreateListingBtn.addEventListener("click", () => {
+      showListingCreateScreen();
+      renderPayloadPreview();
+    });
+  }
+
+  if (refs.backToListingsBtn) {
+    refs.backToListingsBtn.addEventListener("click", () => {
+      showListingsListScreen();
+    });
+  }
 }
 
 function renderListings() {
@@ -249,6 +282,7 @@ function bindListingForm() {
       if (refs.listingStatus) refs.listingStatus.textContent = "Объявление создано.";
       refs.listingForm.reset();
       renderPayloadPreview();
+      showListingsListScreen();
     } catch (error) {
       if (refs.listingStatus) refs.listingStatus.textContent = `Ошибка: ${error.message}`;
     }
@@ -316,21 +350,23 @@ function bindEnhanceForm() {
 }
 
 function init() {
-  const screen = getScreenFromUrl();
-
-  console.log("window.location.href =", window.location.href);
-  console.log("Detected screen =", screen);
-
-  switchSection(screen);
-  bindListingForm();
-  bindPlansForm();
-  bindEnhanceForm();
-  renderPayloadPreview();
-  renderListings();
-
-  if (screen === "listings") {
-    loadListings();
-  }
+    const screen = getScreenFromUrl();
+  
+    console.log("window.location.href =", window.location.href);
+    console.log("Detected screen =", screen);
+  
+    switchSection(screen);
+    bindListingInternalNavigation();
+    bindListingForm();
+    bindPlansForm();
+    bindEnhanceForm();
+    renderPayloadPreview();
+    renderListings();
+  
+    if (screen === "listings") {
+      showListingsListScreen();
+      loadListings();
+    }
 }
 
 document.addEventListener("DOMContentLoaded", init);
