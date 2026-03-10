@@ -1,10 +1,4 @@
-const WEBHOOKS = {
-  createListing: "https://your-activepieces-instance.com/webhooks/create-listing",
-  listListings: "https://your-activepieces-instance.com/webhooks/listings",
-  deleteListing: "https://your-activepieces-instance.com/webhooks/delete-listing",
-  generateInterior: "https://your-activepieces-instance.com/webhooks/generate-interior",
-  enhancePhoto: "https://your-activepieces-instance.com/webhooks/enhance-photo"
-};
+const WEBHOOK_URL = "https://cloud.activepieces.com/api/v1/webhooks/dhNXQ0rS4B2NDDmPOPTig";
 
 const tg = window.Telegram?.WebApp;
 if (tg) {
@@ -18,20 +12,7 @@ const currentUser = {
 };
 
 const state = {
-  listings: [
-    {
-      id: crypto.randomUUID(),
-      createdAt: new Date().toISOString(),
-      title: "2-комнатная квартира, Москва",
-      payloadJson: {
-        title: "2-комнатная квартира, Москва",
-        location: "Москва, ул. Ленина, 10",
-        infrastructure: "Школы, магазины, метро, парк",
-        characteristics: "2 комнаты, 58 м², евроремонт, лоджия",
-        legal: "1 собственник, без обременений"
-      }
-    }
-  ]
+  listings: []
 };
 
 const refs = {
@@ -75,60 +56,6 @@ refs.mobileMenuBtn.addEventListener("click", () => {
   refs.sidebar.classList.toggle("open");
 });
 
-function buildListingPayloadFromForm() {
-  const formData = new FormData(refs.listingForm);
-  return {
-    userId: currentUser.id,
-    route: "create-listing",
-    id: crypto.randomUUID(),
-    createdAt: new Date().toISOString(),
-    payloadJson: {
-      title: String(formData.get("title") || "").trim(),
-      location: String(formData.get("location") || "").trim(),
-      infrastructure: String(formData.get("infrastructure") || "").trim(),
-      characteristics: String(formData.get("characteristics") || "").trim(),
-      legal: String(formData.get("legal") || "").trim()
-    }
-  };
-}
-
-function renderPayloadPreview() {
-  const payload = buildListingPayloadFromForm();
-  refs.listingPayloadPreview.textContent = JSON.stringify(payload, null, 2);
-}
-
-function renderListings() {
-  refs.listingsList.innerHTML = "";
-  const hasItems = state.listings.length > 0;
-  refs.listingsEmpty.style.display = hasItems ? "none" : "block";
-
-  state.listings.forEach((item) => {
-    const card = document.createElement("div");
-    card.className = "listing-item";
-
-    card.innerHTML = `
-      <div class="listing-item-header">
-        <div>
-          <div class="listing-title">${escapeHtml(item.title || "Без названия")}</div>
-          <div class="meta">ID: ${escapeHtml(item.id)}</div>
-          <div class="meta">Создано: ${escapeHtml(new Date(item.createdAt).toLocaleString("ru-RU"))}</div>
-        </div>
-        <button class="btn btn-danger" data-id="${escapeHtml(item.id)}">Удалить</button>
-      </div>
-      <pre class="json-box">${escapeHtml(JSON.stringify(item.payloadJson, null, 2))}</pre>
-    `;
-
-    refs.listingsList.appendChild(card);
-  });
-
-  refs.listingsList.querySelectorAll("[data-id]").forEach((btn) => {
-    btn.addEventListener("click", async () => {
-      const id = btn.dataset.id;
-      await deleteListing(id);
-    });
-  });
-}
-
 function escapeHtml(value) {
   return String(value)
     .replaceAll("&", "&amp;")
@@ -138,8 +65,8 @@ function escapeHtml(value) {
     .replaceAll("'", "&#39;");
 }
 
-async function postJson(url, body) {
-  const response = await fetch(url, {
+async function postJson(body) {
+  const response = await fetch(WEBHOOK_URL, {
     method: "POST",
     headers: {
       "Content-Type": "application/json"
@@ -159,10 +86,103 @@ async function postJson(url, body) {
   return data;
 }
 
+function getBasePayload(route) {
+  return {
+    route,
+    userId: currentUser.id,
+    firstName: currentUser.firstName,
+    initData: tg?.initData || "",
+    sentAt: new Date().toISOString()
+  };
+}
+
+function buildListingPayloadFromForm() {
+  const formData = new FormData(refs.listingForm);
+
+  return {
+    ...getBasePayload("create-listing"),
+    id: crypto.randomUUID(),
+    createdAt: new Date().toISOString(),
+    payloadJson: {
+      title: String(formData.get("title") || "").trim(),
+      location: String(formData.get("location") || "").trim(),
+      infrastructure: String(formData.get("infrastructure") || "").trim(),
+      characteristics: String(formData.get("characteristics") || "").trim(),
+      legal: String(formData.get("legal") || "").trim()
+    }
+  };
+}
+
+function renderPayloadPreview() {
+  const payload = buildListingPayloadFromForm();
+  refs.listingPayloadPreview.textContent = JSON.stringify(payload, null, 2);
+}
+
+function renderListings() {
+  refs.listingsList.innerHTML = "";
+
+  const hasItems = state.listings.length > 0;
+  refs.listingsEmpty.style.display = hasItems ? "none" : "block";
+
+  state.listings.forEach((item) => {
+    const card = document.createElement("div");
+    card.className = "listing-item";
+
+    const title =
+      item.title ||
+      item.payloadJson?.title ||
+      "Без названия";
+
+    const createdAt = item.createdAt
+      ? new Date(item.createdAt).toLocaleString("ru-RU")
+      : "";
+
+    card.innerHTML = `
+      <div class="listing-item-header">
+        <div>
+          <div class="listing-title">${escapeHtml(title)}</div>
+          <div class="meta">ID: ${escapeHtml(item.id || "")}</div>
+          <div class="meta">Создано: ${escapeHtml(createdAt)}</div>
+        </div>
+        <button class="btn btn-danger" data-id="${escapeHtml(item.id || "")}">Удалить</button>
+      </div>
+      <pre class="json-box">${escapeHtml(JSON.stringify(item.payloadJson || {}, null, 2))}</pre>
+    `;
+
+    refs.listingsList.appendChild(card);
+  });
+
+  refs.listingsList.querySelectorAll("[data-id]").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const id = btn.dataset.id;
+      await deleteListing(id);
+    });
+  });
+}
+
+async function loadListings() {
+  refs.listingStatus.textContent = "Загрузка объявлений...";
+
+  try {
+    const result = await postJson({
+      ...getBasePayload("list-listings")
+    });
+
+    state.listings = Array.isArray(result?.items) ? result.items : [];
+    renderListings();
+    refs.listingStatus.textContent = "";
+  } catch (error) {
+    refs.listingStatus.textContent = `Ошибка загрузки: ${error.message}`;
+  }
+}
+
 refs.listingForm.addEventListener("input", renderPayloadPreview);
+
 refs.listingForm.addEventListener("reset", () => {
-  requestAnimationFrame(renderPayloadPreview);
-  refs.listingStatus.textContent = "";
+  requestAnimationFrame(() => {
+    renderPayloadPreview();
+    refs.listingStatus.textContent = "";
+  });
 });
 
 refs.listingForm.addEventListener("submit", async (event) => {
@@ -172,19 +192,22 @@ refs.listingForm.addEventListener("submit", async (event) => {
   const body = buildListingPayloadFromForm();
 
   try {
-    // Для production используйте webhook:
-    // await postJson(WEBHOOKS.createListing, body);
+    const result = await postJson(body);
 
-    state.listings.unshift({
-      id: body.id,
-      createdAt: body.createdAt,
-      title: body.payloadJson.title || "Новое объявление",
-      payloadJson: body.payloadJson
-    });
+    if (result?.item) {
+      state.listings.unshift(result.item);
+    } else {
+      state.listings.unshift({
+        id: body.id,
+        createdAt: body.createdAt,
+        title: body.payloadJson.title || "Новое объявление",
+        payloadJson: body.payloadJson
+      });
+    }
 
-    refs.listingStatus.textContent = "Объявление отправлено в webhook и сохранено.";
-    refs.listingForm.reset();
     renderListings();
+    refs.listingStatus.textContent = "Объявление создано.";
+    refs.listingForm.reset();
     renderPayloadPreview();
   } catch (error) {
     refs.listingStatus.textContent = `Ошибка: ${error.message}`;
@@ -192,15 +215,17 @@ refs.listingForm.addEventListener("submit", async (event) => {
 });
 
 async function deleteListing(id) {
+  refs.listingStatus.textContent = "Удаление объявления...";
+
   try {
-    // await postJson(WEBHOOKS.deleteListing, {
-    //   userId: currentUser.id,
-    //   route: "delete-listing",
-    //   id
-    // });
+    await postJson({
+      ...getBasePayload("delete-listing"),
+      id
+    });
 
     state.listings = state.listings.filter((item) => item.id !== id);
     renderListings();
+    refs.listingStatus.textContent = "Объявление удалено.";
   } catch (error) {
     refs.listingStatus.textContent = `Ошибка удаления: ${error.message}`;
   }
@@ -214,8 +239,7 @@ refs.plansForm.addEventListener("submit", async (event) => {
   const prompt = document.getElementById("planPrompt").value.trim();
 
   const body = {
-    route: "generate-interior",
-    userId: currentUser.id,
+    ...getBasePayload("generate-interior"),
     id: crypto.randomUUID(),
     createdAt: new Date().toISOString(),
     payloadJson: {
@@ -225,8 +249,8 @@ refs.plansForm.addEventListener("submit", async (event) => {
   };
 
   try {
-    // await postJson(WEBHOOKS.generateInterior, body);
-    refs.plansStatus.textContent = "Планировка отправлена в webhook.";
+    await postJson(body);
+    refs.plansStatus.textContent = "Планировка отправлена.";
     refs.plansForm.reset();
   } catch (error) {
     refs.plansStatus.textContent = `Ошибка: ${error.message}`;
@@ -235,14 +259,13 @@ refs.plansForm.addEventListener("submit", async (event) => {
 
 refs.enhanceForm.addEventListener("submit", async (event) => {
   event.preventDefault();
-  refs.enhanceStatus.textContent = "Отправка фото на улучшение...";
+  refs.enhanceStatus.textContent = "Отправка фото...";
 
   const file = document.getElementById("enhanceFile").files[0];
   const prompt = document.getElementById("enhancePrompt").value.trim();
 
   const body = {
-    route: "enhance-photo",
-    userId: currentUser.id,
+    ...getBasePayload("enhance-photo"),
     id: crypto.randomUUID(),
     createdAt: new Date().toISOString(),
     payloadJson: {
@@ -252,8 +275,8 @@ refs.enhanceForm.addEventListener("submit", async (event) => {
   };
 
   try {
-    // await postJson(WEBHOOKS.enhancePhoto, body);
-    refs.enhanceStatus.textContent = "Фото отправлено в webhook.";
+    await postJson(body);
+    refs.enhanceStatus.textContent = "Фото отправлено.";
     refs.enhanceForm.reset();
   } catch (error) {
     refs.enhanceStatus.textContent = `Ошибка: ${error.message}`;
@@ -262,3 +285,4 @@ refs.enhanceForm.addEventListener("submit", async (event) => {
 
 renderPayloadPreview();
 renderListings();
+loadListings();
