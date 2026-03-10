@@ -15,38 +15,27 @@ const state = {
   listings: []
 };
 
+function byId(id) {
+  return document.getElementById(id);
+}
+
 const refs = {
-  userName: document.getElementById("userName"),
-  userIdBadge: document.getElementById("userIdBadge"),
+  userName: byId("userName"),
+  userIdBadge: byId("userIdBadge"),
   sections: [...document.querySelectorAll(".section")],
-  listingForm: document.getElementById("listingForm"),
-  listingStatus: document.getElementById("listingStatus"),
-  listingPayloadPreview: document.getElementById("listingPayloadPreview"),
-  listingsList: document.getElementById("listingsList"),
-  listingsEmpty: document.getElementById("listingsEmpty"),
-  plansForm: document.getElementById("plansForm"),
-  plansStatus: document.getElementById("plansStatus"),
-  enhanceForm: document.getElementById("enhanceForm"),
-  enhanceStatus: document.getElementById("enhanceStatus")
+  listingForm: byId("listingForm"),
+  listingStatus: byId("listingStatus"),
+  listingPayloadPreview: byId("listingPayloadPreview"),
+  listingsList: byId("listingsList"),
+  listingsEmpty: byId("listingsEmpty"),
+  plansForm: byId("plansForm"),
+  plansStatus: byId("plansStatus"),
+  enhanceForm: byId("enhanceForm"),
+  enhanceStatus: byId("enhanceStatus")
 };
 
-refs.userName.textContent = currentUser.firstName;
-refs.userIdBadge.textContent = `userId: ${currentUser.id}`;
-
-function getScreenFromUrl() {
-  const params = new URLSearchParams(window.location.search);
-  const screen = params.get("screen");
-
-  if (screen === "plans") return "plans";
-  if (screen === "enhance") return "enhance";
-  return "listings";
-}
-
-function switchSection(sectionKey) {
-  refs.sections.forEach((section) => {
-    section.classList.toggle("active", section.id === `section-${sectionKey}`);
-  });
-}
+if (refs.userName) refs.userName.textContent = currentUser.firstName;
+if (refs.userIdBadge) refs.userIdBadge.textContent = `userId: ${currentUser.id}`;
 
 function escapeHtml(value) {
   return String(value)
@@ -88,6 +77,46 @@ function getBasePayload(route) {
   };
 }
 
+function normalizeScreen(value) {
+  if (!value) return "listings";
+
+  const v = String(value).trim().toLowerCase();
+
+  if (v === "plans" || v === "plan" || v === "layout" || v === "layouts") {
+    return "plans";
+  }
+
+  if (v === "enhance" || v === "photo" || v === "improve" || v === "improve-photo") {
+    return "enhance";
+  }
+
+  return "listings";
+}
+
+function getScreenFromUrl() {
+  const url = new URL(window.location.href);
+
+  const queryScreen = url.searchParams.get("screen");
+  if (queryScreen) return normalizeScreen(queryScreen);
+
+  const hash = window.location.hash.replace("#", "").trim();
+  if (hash) return normalizeScreen(hash);
+
+  return "listings";
+}
+
+function switchSection(sectionKey) {
+  const normalized = normalizeScreen(sectionKey);
+
+  refs.sections.forEach((section) => {
+    const isActive = section.id === `section-${normalized}`;
+    section.classList.toggle("active", isActive);
+    section.style.display = isActive ? "block" : "none";
+  });
+
+  console.log("Active screen:", normalized);
+}
+
 function buildListingPayloadFromForm() {
   const formData = new FormData(refs.listingForm);
 
@@ -107,8 +136,7 @@ function buildListingPayloadFromForm() {
 
 function renderPayloadPreview() {
   if (!refs.listingPayloadPreview || !refs.listingForm) return;
-  const payload = buildListingPayloadFromForm();
-  refs.listingPayloadPreview.textContent = JSON.stringify(payload, null, 2);
+  refs.listingPayloadPreview.textContent = JSON.stringify(buildListingPayloadFromForm(), null, 2);
 }
 
 function renderListings() {
@@ -123,14 +151,8 @@ function renderListings() {
     const card = document.createElement("div");
     card.className = "listing-item";
 
-    const title =
-      item.title ||
-      item.payloadJson?.title ||
-      "Без названия";
-
-    const createdAt = item.createdAt
-      ? new Date(item.createdAt).toLocaleString("ru-RU")
-      : "";
+    const title = item.title || item.payloadJson?.title || "Без названия";
+    const createdAt = item.createdAt ? new Date(item.createdAt).toLocaleString("ru-RU") : "";
 
     card.innerHTML = `
       <div class="listing-item-header">
@@ -149,8 +171,7 @@ function renderListings() {
 
   refs.listingsList.querySelectorAll("[data-id]").forEach((btn) => {
     btn.addEventListener("click", async () => {
-      const id = btn.dataset.id;
-      await deleteListing(id);
+      await deleteListing(btn.dataset.id);
     });
   });
 }
@@ -173,19 +194,40 @@ async function loadListings() {
   }
 }
 
-if (refs.listingForm) {
+async function deleteListing(id) {
+  if (!refs.listingStatus) return;
+
+  refs.listingStatus.textContent = "Удаление объявления...";
+
+  try {
+    await postJson({
+      ...getBasePayload("delete-listing"),
+      id
+    });
+
+    state.listings = state.listings.filter((item) => item.id !== id);
+    renderListings();
+    refs.listingStatus.textContent = "Объявление удалено.";
+  } catch (error) {
+    refs.listingStatus.textContent = `Ошибка удаления: ${error.message}`;
+  }
+}
+
+function bindListingForm() {
+  if (!refs.listingForm) return;
+
   refs.listingForm.addEventListener("input", renderPayloadPreview);
 
   refs.listingForm.addEventListener("reset", () => {
     requestAnimationFrame(() => {
       renderPayloadPreview();
-      refs.listingStatus.textContent = "";
+      if (refs.listingStatus) refs.listingStatus.textContent = "";
     });
   });
 
   refs.listingForm.addEventListener("submit", async (event) => {
     event.preventDefault();
-    refs.listingStatus.textContent = "Отправка объявления...";
+    if (refs.listingStatus) refs.listingStatus.textContent = "Отправка объявления...";
 
     const body = buildListingPayloadFromForm();
 
@@ -204,39 +246,24 @@ if (refs.listingForm) {
       }
 
       renderListings();
-      refs.listingStatus.textContent = "Объявление создано.";
+      if (refs.listingStatus) refs.listingStatus.textContent = "Объявление создано.";
       refs.listingForm.reset();
       renderPayloadPreview();
     } catch (error) {
-      refs.listingStatus.textContent = `Ошибка: ${error.message}`;
+      if (refs.listingStatus) refs.listingStatus.textContent = `Ошибка: ${error.message}`;
     }
   });
 }
 
-async function deleteListing(id) {
-  refs.listingStatus.textContent = "Удаление объявления...";
+function bindPlansForm() {
+  if (!refs.plansForm) return;
 
-  try {
-    await postJson({
-      ...getBasePayload("delete-listing"),
-      id
-    });
-
-    state.listings = state.listings.filter((item) => item.id !== id);
-    renderListings();
-    refs.listingStatus.textContent = "Объявление удалено.";
-  } catch (error) {
-    refs.listingStatus.textContent = `Ошибка удаления: ${error.message}`;
-  }
-}
-
-if (refs.plansForm) {
   refs.plansForm.addEventListener("submit", async (event) => {
     event.preventDefault();
-    refs.plansStatus.textContent = "Отправка планировки...";
+    if (refs.plansStatus) refs.plansStatus.textContent = "Отправка планировки...";
 
-    const file = document.getElementById("planFile").files[0];
-    const prompt = document.getElementById("planPrompt").value.trim();
+    const file = byId("planFile")?.files?.[0];
+    const prompt = byId("planPrompt")?.value?.trim() || "";
 
     const body = {
       ...getBasePayload("generate-interior"),
@@ -250,21 +277,23 @@ if (refs.plansForm) {
 
     try {
       await postJson(body);
-      refs.plansStatus.textContent = "Планировка отправлена.";
+      if (refs.plansStatus) refs.plansStatus.textContent = "Планировка отправлена.";
       refs.plansForm.reset();
     } catch (error) {
-      refs.plansStatus.textContent = `Ошибка: ${error.message}`;
+      if (refs.plansStatus) refs.plansStatus.textContent = `Ошибка: ${error.message}`;
     }
   });
 }
 
-if (refs.enhanceForm) {
+function bindEnhanceForm() {
+  if (!refs.enhanceForm) return;
+
   refs.enhanceForm.addEventListener("submit", async (event) => {
     event.preventDefault();
-    refs.enhanceStatus.textContent = "Отправка фото...";
+    if (refs.enhanceStatus) refs.enhanceStatus.textContent = "Отправка фото...";
 
-    const file = document.getElementById("enhanceFile").files[0];
-    const prompt = document.getElementById("enhancePrompt").value.trim();
+    const file = byId("enhanceFile")?.files?.[0];
+    const prompt = byId("enhancePrompt")?.value?.trim() || "";
 
     const body = {
       ...getBasePayload("enhance-photo"),
@@ -278,18 +307,30 @@ if (refs.enhanceForm) {
 
     try {
       await postJson(body);
-      refs.enhanceStatus.textContent = "Фото отправлено.";
+      if (refs.enhanceStatus) refs.enhanceStatus.textContent = "Фото отправлено.";
       refs.enhanceForm.reset();
     } catch (error) {
-      refs.enhanceStatus.textContent = `Ошибка: ${error.message}`;
+      if (refs.enhanceStatus) refs.enhanceStatus.textContent = `Ошибка: ${error.message}`;
     }
   });
 }
 
-switchSection(getScreenFromUrl());
-renderPayloadPreview();
-renderListings();
+function init() {
+  const screen = getScreenFromUrl();
 
-if (getScreenFromUrl() === "listings") {
-  loadListings();
+  console.log("window.location.href =", window.location.href);
+  console.log("Detected screen =", screen);
+
+  switchSection(screen);
+  bindListingForm();
+  bindPlansForm();
+  bindEnhanceForm();
+  renderPayloadPreview();
+  renderListings();
+
+  if (screen === "listings") {
+    loadListings();
+  }
 }
+
+document.addEventListener("DOMContentLoaded", init);
