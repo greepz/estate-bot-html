@@ -7,7 +7,7 @@ if (tg) {
 }
 
 const currentUser = {
-  id: String(tg?.initDataUnsafe?.user?.id || "demo-user"),
+  id: String(tg?.initDataUnsafe?.user?.id || "demo"),
   firstName: tg?.initDataUnsafe?.user?.first_name || "Пользователь"
 };
 
