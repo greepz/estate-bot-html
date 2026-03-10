@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Realty Mini App</title>
+  <meta name="theme-color" content="#0f172a" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./styles.css" />
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+      <div class="brand">
+        <div class="brand-title">Realty Mini App</div>
+        <div class="brand-subtitle">Telegram Web App</div>
+      </div>
+
+      <nav class="menu">
+        <button class="menu-item active" data-section="listings">
+          <span class="menu-icon">🏠</span>
+          <span>Мои объявления</span>
+        </button>
+        <button class="menu-item" data-section="plans">
+          <span class="menu-icon">📐</span>
+          <span>Планировки</span>
+        </button>
+        <button class="menu-item" data-section="enhance">
+          <span class="menu-icon">✨</span>
+          <span>Улучшить фото</span>
+        </button>
+      </nav>
+
+      <div class="sidebar-note">
+        <div class="sidebar-note-title">Backend</div>
+        <div class="sidebar-note-text">
+          Frontend отправляет JSON в Activepieces webhook, а на backend Router разводит сценарий по route.
+        </div>
+      </div>
+    </aside>
+
+    <main class="content">
+      <div class="topbar">
+        <button class="mobile-menu-btn" id="mobileMenuBtn">☰ Меню</button>
+        <div class="user-box">
+          <div class="user-greeting">Здравствуйте</div>
+          <div class="user-name" id="userName">Пользователь</div>
+        </div>
+      </div>
+
+      <section class="section active" id="section-listings">
+        <div class="section-header">
+          <div>
+            <h1>Мои объявления</h1>
+            <p>Форма создания объявления, список объявлений и удаление.</p>
+          </div>
+          <div class="pill" id="userIdBadge">userId: demo-user</div>
+        </div>
+
+        <div class="grid-two">
+          <div class="card">
+            <div class="card-header">
+              <h2>Создать объявление</h2>
+              <p>Заполните параметры. На backend они сохраняются в таблицу и используются для prompt.</p>
+            </div>
+
+            <form id="listingForm" class="form-stack">
+              <div class="field">
+                <label for="listingTitle">Название объявления</label>
+                <input id="listingTitle" name="title" type="text" placeholder="Например: 2-комнатная квартира, Москва" />
+              </div>
+
+              <div class="field">
+                <label for="listingLocation">Локация</label>
+                <textarea id="listingLocation" name="location" rows="4" placeholder="Город, адрес"></textarea>
+              </div>
+
+              <div class="field">
+                <label for="listingInfrastructure">Инфраструктура</label>
+                <textarea id="listingInfrastructure" name="infrastructure" rows="4" placeholder="Школы, магазины, транспорт, набережная"></textarea>
+              </div>
+
+              <div class="field">
+                <label for="listingCharacteristics">Характеристики</label>
+                <textarea id="listingCharacteristics" name="characteristics" rows="4" placeholder="Комнаты, планировка, состояние, особенности, доп. помещения"></textarea>
+              </div>
+
+              <div class="field">
+                <label for="listingLegal">Юридические аспекты</label>
+                <textarea id="listingLegal" name="legal" rows="4" placeholder="Собственность, документы, ипотека, быстрый выход на сделку"></textarea>
+              </div>
+
+              <div class="actions">
+                <button class="btn btn-primary" type="submit">Создать объявление</button>
+                <button class="btn btn-secondary" type="reset">Очистить</button>
+              </div>
+
+              <div class="status" id="listingStatus"></div>
+            </form>
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <h2>JSON для webhook и таблицы</h2>
+              <p>Пример структуры записи: id, createdAt и payloadJson.</p>
+            </div>
+            <pre class="code-box" id="listingPayloadPreview"></pre>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h2>Список моих объявлений</h2>
+            <p>В production backend может возвращать записи по userId из таблицы Activepieces.</p>
+          </div>
+          <div id="listingsEmpty" class="empty-state">Объявлений пока нет.</div>
+          <div id="listingsList" class="list-stack"></div>
+        </div>
+      </section>
+
+      <section class="section" id="section-plans">
+        <div class="section-header">
+          <div>
+            <h1>Планировки</h1>
+            <p>Загрузите фото плана квартиры. Backend запускает сценарий добавления интерьера.</p>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h2>Отправить планировку</h2>
+            <p>Файл и prompt уходят в webhook с route generate-interior.</p>
+          </div>
+
+          <form id="plansForm" class="form-stack">
+            <div class="field">
+              <label for="planFile">Фото планировки</label>
+              <input id="planFile" name="file" type="file" accept="image/*" />
+            </div>
+
+            <div class="field">
+              <label for="planPrompt">Промпт для интерьера</label>
+              <textarea id="planPrompt" name="prompt" rows="5">Добавь современный интерьер в светлых тонах, сохрани геометрию помещения.</textarea>
+            </div>
+
+            <div class="actions">
+              <button class="btn btn-primary" type="submit">Сгенерировать интерьер</button>
+            </div>
+
+            <div class="status" id="plansStatus"></div>
+          </form>
+        </div>
+      </section>
+
+      <section class="section" id="section-enhance">
+        <div class="section-header">
+          <div>
+            <h1>Улучшить фото</h1>
+            <p>Загрузите фото объявления и отправьте prompt для улучшения.</p>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h2>Улучшение фото</h2>
+            <p>Файл и prompt уходят в webhook с route enhance-photo.</p>
+          </div>
+
+          <form id="enhanceForm" class="form-stack">
+            <div class="field">
+              <label for="enhanceFile">Фото объекта</label>
+              <input id="enhanceFile" name="file" type="file" accept="image/*" />
+            </div>
+
+            <div class="field">
+              <label for="enhancePrompt">Промпт улучшения</label>
+              <textarea id="enhancePrompt" name="prompt" rows="5">Улучши фото для объявления: выровняй свет, сделай интерьер чище и привлекательнее, сохрани реалистичность.</textarea>
+            </div>
+
+            <div class="actions">
+              <button class="btn btn-primary" type="submit">Улучшить фото</button>
+            </div>
+
+            <div class="status" id="enhanceStatus"></div>
+          </form>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="./app.js"></script>
+</body>
+</html>
