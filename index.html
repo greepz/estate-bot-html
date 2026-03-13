@@ -7,7 +7,7 @@
     content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover"
   />
   <title>Realty Mini App</title>
-  <meta name="theme-color" content="#0f172a" />
+  <meta name="theme-color" content="#17212b" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link
@@ -20,81 +20,92 @@
 <body>
   <main class="app">
     <header class="topbar">
-      <div class="topbar-text">
-        <div class="topbar-label">Здравствуйте</div>
-        <div class="topbar-title" id="userName">Пользователь</div>
+      <div class="topbar-main">
+        <div class="avatar-circle" id="userAvatar">П</div>
+        <div class="topbar-text">
+          <div class="topbar-label">Здравствуйте</div>
+          <div class="topbar-title" id="userName">Пользователь</div>
+        </div>
       </div>
-      <div class="topbar-badge" id="userIdBadge">userId: demo-user</div>
+      <div class="topbar-badge" id="userIdBadge">ID: demo-user</div>
     </header>
 
     <section class="section active" id="section-listings">
-          <div class="section-header">
-            <h1>Мои объявления</h1>
-            <p>Список созданных объявлений и управление ими.</p>
-          </div>
-      
-          <div class="card">
-            <div class="actions">
-              <button class="btn btn-primary" type="button" id="openCreateListingBtn">
-                Создать объявление
-              </button>
-            </div>
-          </div>
-      
-          <div class="card">
-            <div class="card-header">
-              <h2>Список моих объявлений</h2>
-              <p>Backend может возвращать записи по userId из таблицы Activepieces.</p>
-            </div>
-            <div id="listingsEmpty" class="empty-state">Объявлений пока нет.</div>
-            <div id="listingsList" class="list-stack"></div>
-            <div class="status" id="listingStatus"></div>
-          </div>
+      <div id="listingsListScreen">
+        <div class="section-header">
+          <h1>Мои объявления</h1>
+          <p>Список объявлений и управление ими.</p>
         </div>
-      
-        <div id="listingCreateScreen" class="hidden">
-            <div class="section-header">
-              <h1>Создать объявление</h1>
-              <p>Пошаговый мастер. Можно возвращаться назад и редактировать шаги.</p>
+
+        <div class="hero-card">
+          <div>
+            <div class="hero-title">Быстрое создание объявления</div>
+            <div class="hero-text">Заполните пошаговый мастер и отправьте данные в Activepieces.</div>
+          </div>
+          <button class="btn btn-primary" type="button" id="openCreateListingBtn">
+            Создать объявление
+          </button>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h2>Список моих объявлений</h2>
+            <p>Объявления загружаются по userId.</p>
+          </div>
+          <div id="listingsEmpty" class="empty-state">Объявлений пока нет.</div>
+          <div id="listingsList" class="list-stack"></div>
+          <div class="status" id="listingStatus"></div>
+        </div>
+      </div>
+
+      <div id="listingCreateScreen" class="hidden">
+        <div class="section-header">
+          <h1>Создать объявление</h1>
+          <p>Пошаговый мастер заполнения.</p>
+        </div>
+
+        <div class="create-top-actions">
+          <button class="btn btn-secondary btn-back-inline" type="button" id="backToListingsBtn">
+            ← К списку
+          </button>
+        </div>
+
+        <div class="card">
+          <div class="wizard-top">
+            <div class="wizard-progress-text">
+              <span id="wizardStepLabel">1 шаг</span>
+              <span id="wizardStepCounter">1 / 1</span>
             </div>
-          
-            <div class="card">
-              <div class="wizard-top">
-                <div class="wizard-progress-text">
-                  <span id="wizardStepLabel">Шаг 1</span>
-                  <span id="wizardStepCounter">1 / 1</span>
-                </div>
-                <div class="progress-bar">
-                  <div class="progress-bar-fill" id="wizardProgressFill"></div>
-                </div>
-              </div>
-          
-              <div id="wizardStepContainer"></div>
-          
-              <div class="actions wizard-actions">
-                <button class="btn btn-secondary" type="button" id="wizardBackBtn">Назад</button>
-                <button class="btn btn-secondary" type="button" id="backToListingsBtn">К списку</button>
-                <button class="btn btn-primary" type="button" id="wizardNextBtn">Далее</button>
-                <button class="btn btn-primary hidden" type="button" id="wizardSubmitBtn">Создать объявление</button>
-              </div>
-          
-              <div class="status" id="wizardStatus"></div>
-            </div>
-          
-            <div class="card">
-              <div class="card-header">
-                <h2>JSON для webhook и таблицы</h2>
-                <p>То, что будет отправлено на backend.</p>
-              </div>
-              <pre class="code-box" id="listingPayloadPreview"></pre>
+            <div class="progress-bar">
+              <div class="progress-bar-fill" id="wizardProgressFill"></div>
             </div>
           </div>
-      </section>
+
+          <div id="wizardStepContainer"></div>
+
+          <div class="actions wizard-actions">
+            <button class="btn btn-secondary" type="button" id="wizardBackBtn">Назад</button>
+            <button class="btn btn-primary" type="button" id="wizardNextBtn">Далее</button>
+            <button class="btn btn-primary hidden" type="button" id="wizardSubmitBtn">Создать объявление</button>
+          </div>
+
+          <div class="status" id="wizardStatus"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h2>JSON для webhook</h2>
+            <p>То, что будет отправлено на backend.</p>
+          </div>
+          <pre class="code-box" id="listingPayloadPreview"></pre>
+        </div>
+      </div>
+    </section>
 
     <section class="section" id="section-plans">
       <div class="section-header">
         <h1>Планировки</h1>
-        <p>Загрузите фото плана квартиры и отправьте prompt для генерации интерьера.</p>
+        <p>Загрузите фото плана и prompt для генерации интерьера.</p>
       </div>
 
       <div class="card">
@@ -126,7 +137,7 @@
     <section class="section" id="section-enhance">
       <div class="section-header">
         <h1>Улучшить фото</h1>
-        <p>Загрузите фото объявления и отправьте prompt для улучшения.</p>
+        <p>Загрузите фото объявления и prompt для улучшения.</p>
       </div>
 
       <div class="card">
@@ -154,6 +165,12 @@
         </form>
       </div>
     </section>
+
+    <nav class="bottom-nav">
+      <button class="bottom-nav-item active" data-screen="listings">Объявления</button>
+      <button class="bottom-nav-item" data-screen="plans">Планы</button>
+      <button class="bottom-nav-item" data-screen="enhance">Фото</button>
+    </nav>
   </main>
 
   <script src="./app.js"></script>
