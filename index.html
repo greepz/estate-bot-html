@@ -28,7 +28,6 @@
     </header>
 
     <section class="section active" id="section-listings">
-        <div id="listingsListScreen">
           <div class="section-header">
             <h1>Мои объявления</h1>
             <p>Список созданных объявлений и управление ими.</p>
@@ -54,79 +53,42 @@
         </div>
       
         <div id="listingCreateScreen" class="hidden">
-          <div class="section-header">
-            <h1>Создать объявление</h1>
-            <p>Заполните параметры. На backend они сохраняются в таблицу и используются для prompt.</p>
-          </div>
-      
-          <div class="card">
-            <form id="listingForm" class="form-stack">
-              <div class="field">
-                <label for="listingTitle">Название объявления</label>
-                <input
-                  id="listingTitle"
-                  name="title"
-                  type="text"
-                  placeholder="Например: 2-комнатная квартира, Москва"
-                />
-              </div>
-      
-              <div class="field">
-                <label for="listingLocation">Локация</label>
-                <textarea
-                  id="listingLocation"
-                  name="location"
-                  rows="4"
-                  placeholder="Город, адрес"
-                ></textarea>
-              </div>
-      
-              <div class="field">
-                <label for="listingInfrastructure">Инфраструктура</label>
-                <textarea
-                  id="listingInfrastructure"
-                  name="infrastructure"
-                  rows="4"
-                  placeholder="Школы, магазины, транспорт, набережная"
-                ></textarea>
-              </div>
-      
-              <div class="field">
-                <label for="listingCharacteristics">Характеристики</label>
-                <textarea
-                  id="listingCharacteristics"
-                  name="characteristics"
-                  rows="4"
-                  placeholder="Комнаты, планировка, состояние, особенности, доп. помещения"
-                ></textarea>
-              </div>
-      
-              <div class="field">
-                <label for="listingLegal">Юридические аспекты</label>
-                <textarea
-                  id="listingLegal"
-                  name="legal"
-                  rows="4"
-                  placeholder="Собственность, документы, ипотека, быстрый выход на сделку"
-                ></textarea>
-              </div>
-      
-              <div class="actions">
-                <button class="btn btn-primary" type="submit">Сохранить объявление</button>
-                <button class="btn btn-secondary" type="button" id="backToListingsBtn">Назад к списку</button>
-                <button class="btn btn-secondary" type="reset">Очистить</button>
-              </div>
-            </form>
-          </div>
-      
-          <div class="card">
-            <div class="card-header">
-              <h2>JSON для webhook и таблицы</h2>
-              <p>Пример структуры записи: id, createdAt и payloadJson.</p>
+            <div class="section-header">
+              <h1>Создать объявление</h1>
+              <p>Пошаговый мастер. Можно возвращаться назад и редактировать шаги.</p>
             </div>
-            <pre class="code-box" id="listingPayloadPreview"></pre>
+          
+            <div class="card">
+              <div class="wizard-top">
+                <div class="wizard-progress-text">
+                  <span id="wizardStepLabel">Шаг 1</span>
+                  <span id="wizardStepCounter">1 / 1</span>
+                </div>
+                <div class="progress-bar">
+                  <div class="progress-bar-fill" id="wizardProgressFill"></div>
+                </div>
+              </div>
+          
+              <div id="wizardStepContainer"></div>
+          
+              <div class="actions wizard-actions">
+                <button class="btn btn-secondary" type="button" id="wizardBackBtn">Назад</button>
+                <button class="btn btn-secondary" type="button" id="backToListingsBtn">К списку</button>
+                <button class="btn btn-primary" type="button" id="wizardNextBtn">Далее</button>
+                <button class="btn btn-primary hidden" type="button" id="wizardSubmitBtn">Создать объявление</button>
+              </div>
+          
+              <div class="status" id="wizardStatus"></div>
+            </div>
+          
+            <div class="card">
+              <div class="card-header">
+                <h2>JSON для webhook и таблицы</h2>
+                <p>То, что будет отправлено на backend.</p>
+              </div>
+              <pre class="code-box" id="listingPayloadPreview"></pre>
+            </div>
           </div>
-        </div>
       </section>
 
     <section class="section" id="section-plans">
