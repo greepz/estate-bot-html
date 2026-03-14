@@ -890,6 +890,7 @@ function buildListingPayloadFromWizard() {
 
   return {
     ...getBasePayload("create-listing"),
+    routingKey: getRoutingKey(payloadJson),
     id: crypto.randomUUID(),
     createdAt: new Date().toISOString(),
     payloadJson
@@ -993,6 +994,26 @@ function bindWizardNavigation() {
 
   if (refs.wizardNextBtn) refs.wizardNextBtn.addEventListener("click", goNextStep);
   if (refs.wizardSubmitBtn) refs.wizardSubmitBtn.addEventListener("click", submitWizard);
+}
+
+function getRoutingKey(payloadJson = {}) {
+  const dealType = payloadJson.dealType;
+  const propertyType = payloadJson.propertyType;
+
+  const dealMap = {
+    "Продажа": "sale",
+    "Аренда": "rent"
+  };
+
+  const propertyMap = {
+    "Квартира": "apartment",
+    "Загородная недвижимость": "country"
+  };
+
+  const deal = dealMap[dealType] || "unknown";
+  const property = propertyMap[propertyType] || "unknown";
+
+  return `${deal}_${property}`;
 }
 
 function bindPlansForm() {
