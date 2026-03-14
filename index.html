@@ -8,12 +8,14 @@
   />
   <title>Realty Mini App</title>
   <meta name="theme-color" content="#17212b" />
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link
     href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
     rel="stylesheet"
-  >
+  />
+
   <link rel="stylesheet" href="./styles.css" />
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
@@ -32,10 +34,6 @@
 
     <section class="section active" id="section-listings">
       <div id="listingsListScreen">
-        <div class="section-header">
-          <h1></h1>
-        </div>
-
         <div class="hero-card">
           <div>
             <div class="hero-title">Мои объявления</div>
@@ -47,9 +45,10 @@
 
         <div class="card">
           <div class="card-header">
-            <h2>Список моих объявлений</h2>
+            <h2>Список объявлений</h2>
             <p>Объявления загружаются по userId.</p>
           </div>
+
           <div id="listingsEmpty" class="empty-state">Объявлений пока нет.</div>
           <div id="listingsList" class="list-stack"></div>
           <div class="status" id="listingStatus"></div>
@@ -69,6 +68,7 @@
               <span id="wizardStepLabel">1 шаг</span>
               <span id="wizardStepCounter">1 / 1</span>
             </div>
+
             <div class="progress-bar">
               <div class="progress-bar-fill" id="wizardProgressFill"></div>
             </div>
@@ -77,9 +77,15 @@
           <div id="wizardStepContainer"></div>
 
           <div class="actions wizard-actions">
-            <button class="btn btn-secondary" type="button" id="wizardBackBtn">Назад</button>
-            <button class="btn btn-primary" type="button" id="wizardNextBtn">Далее</button>
-            <button class="btn btn-primary hidden" type="button" id="wizardSubmitBtn">Создать объявление</button>
+            <button class="btn btn-secondary" type="button" id="wizardBackBtn">
+              Назад
+            </button>
+            <button class="btn btn-primary" type="button" id="wizardNextBtn">
+              Далее
+            </button>
+            <button class="btn btn-primary hidden" type="button" id="wizardSubmitBtn">
+              Создать объявление
+            </button>
           </div>
 
           <div class="status" id="wizardStatus"></div>
