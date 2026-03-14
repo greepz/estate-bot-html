@@ -62,6 +62,8 @@ const refs = {
 if (refs.userName) refs.userName.textContent = currentUser.firstName;
 if (refs.userIdBadge) refs.userIdBadge.textContent = `ID: ${currentUser.id}`;
 if (refs.userAvatar) refs.userAvatar.textContent = (currentUser.firstName || "П").trim().charAt(0).toUpperCase();
+const topbarLabel = document.querySelector(".topbar-label");
+if (topbarLabel) topbarLabel.remove();
 
 function escapeHtml(value) {
   return String(value ?? "")
@@ -974,17 +976,31 @@ function renderWizard() {
 
   const value = state.wizard.values[step.key] ?? (step.type === "multi-options" ? [] : "");
   const needsCustomInput = isOwnVariantOption(step, value);
+  const errorText = refs.wizardStatus?.textContent?.trim() || "";
 
   let html = `
     <div class="wizard-step">
+      ${errorText ? `<div class="wizard-status-top">${escapeHtml(errorText)}</div>` : ""}
       <div class="wizard-question">${escapeHtml(step.title)}</div>
       ${step.hint ? `<div class="wizard-hint">${escapeHtml(step.hint)}</div>` : ""}
+      <div class="wizard-meta">
+        ${step.type === "multi-options" ? `<div class="wizard-badge wizard-badge-multi">Можно выбрать несколько</div>` : ""}
+        ${step.required ? `<div class="wizard-badge wizard-badge-required">Обязательное поле</div>` : ""}
+      </div>
   `;
 
   if (step.type === "options" || step.type === "multi-options") {
     html += `<div class="option-list">`;
 
+    const shouldShowOnlyCustom =
+      needsCustomInput &&
+      (step.type === "options" || step.type === "multi-options");
+
     step.options.forEach((option) => {
+      if (shouldShowOnlyCustom && option !== "Свой вариант") {
+        return;
+      }
+
       const active =
         step.type === "multi-options"
           ? Array.isArray(value) && value.includes(option)
@@ -993,7 +1009,7 @@ function renderWizard() {
       html += `
         <button
           type="button"
-          class="option-button ${active ? "active" : ""}"
+          class="option-button ${active ? "active" : ""} ${step.type === "multi-options" ? "multi-option" : ""}"
           data-option-value="${escapeHtml(option)}"
         >
           ${escapeHtml(option)}
@@ -1011,6 +1027,7 @@ function renderWizard() {
           <label for="customValueInput">Введите свой вариант</label>
           <input id="customValueInput" type="text" value="${escapeHtml(customValue)}" placeholder="Введите значение" />
         </div>
+        <button type="button" class="back-link" id="resetCustomOptionBtn">← Вернуться к вариантам</button>
       `;
     }
   }
@@ -1119,6 +1136,21 @@ function bindWizardStepEvents() {
       renderWizard();
     });
   });
+
+  const resetCustomOptionBtn = byId("resetCustomOptionBtn");
+  if (resetCustomOptionBtn) {
+    resetCustomOptionBtn.addEventListener("click", () => {
+      if (step.type === "multi-options") {
+        const current = Array.isArray(state.wizard.values[step.key]) ? [...state.wizard.values[step.key]] : [];
+        state.wizard.values[step.key] = current.filter((item) => item !== "Свой вариант");
+      } else {
+        delete state.wizard.values[step.key];
+      }
+
+      delete state.wizard.values[`${step.key}_custom`];
+      renderWizard();
+    });
+  }
 
   const customInput = byId("customValueInput");
   if (customInput) {
