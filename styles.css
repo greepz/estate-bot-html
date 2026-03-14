@@ -421,6 +421,30 @@ body {
   flex-wrap: nowrap;
 }
 
+.wizard-step-topline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 2px;
+}
+
+.wizard-step-back {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--primary-dark);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.wizard-step-back:hover {
+  text-decoration: underline;
+}
+
 .wizard-step-title-row {
   display: flex;
   align-items: center;
@@ -543,9 +567,7 @@ body {
 .wizard-actions {
   margin-top: 16px;
   display: flex;
-  gap: 8px;
-  align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   position: sticky;
   bottom: calc(10px + env(safe-area-inset-bottom));
   background: rgba(255, 255, 255, 0.96);
@@ -555,8 +577,8 @@ body {
 }
 
 .wizard-actions .btn {
-  flex: 1 1 0;
-  min-width: 0;
+  width: auto;
+  min-width: 140px;
 }
 
 /* ---------- BOTTOM NAV ---------- */

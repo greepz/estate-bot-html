@@ -49,7 +49,6 @@ const refs = {
   wizardStepLabel: byId("wizardStepLabel"),
   wizardStepCounter: byId("wizardStepCounter"),
   wizardProgressFill: byId("wizardProgressFill"),
-  wizardBackBtn: byId("wizardBackBtn"),
   wizardNextBtn: byId("wizardNextBtn"),
   wizardSubmitBtn: byId("wizardSubmitBtn"),
   wizardStatus: byId("wizardStatus"),
@@ -95,6 +94,16 @@ async function postJson(body) {
   }
 
   return data;
+}
+
+function shouldShowNextButton(step, value) {
+  if (!step) return false;
+
+  if (step.type === "multi-options") return true;
+  if (step.type === "input" || step.type === "textarea") return true;
+  if (step.type === "options" && value === "Свой вариант") return true;
+
+  return false;
 }
 
 function getBasePayload(route) {
@@ -567,18 +576,27 @@ function renderWizard() {
   const multiCount = isMulti ? getMultiSelectedCount(step) : 0;
 
   let html = `
-  <div class="wizard-step">
-    <div class="wizard-step-head">
-      <div class="wizard-step-title-row">
-        <div class="wizard-question">${escapeHtml(step.title)}</div>
+    <div class="wizard-step">
+      <div class="wizard-step-topline">
+        ${
+          state.wizard.currentStepIndex > 0
+            ? `<button type="button" class="wizard-step-back" id="wizardStepBackLink">← Назад</button>`
+            : `<span></span>`
+        }
       </div>
-      <div class="wizard-step-badges">
-        ${step.required ? `<span class="wizard-step-chip wizard-step-chip-required">Обязательное</span>` : ""}
-        ${isMulti ? `<span class="wizard-step-chip wizard-step-chip-multi">Несколько</span>` : ""}
+
+      <div class="wizard-step-head">
+        <div class="wizard-step-title-row">
+          <div class="wizard-question">${escapeHtml(step.title)}</div>
+        </div>
+        <div class="wizard-step-badges">
+          ${step.required ? `<span class="wizard-step-chip wizard-step-chip-required">Обязательное</span>` : ""}
+          ${isMulti ? `<span class="wizard-step-chip wizard-step-chip-multi">Несколько</span>` : ""}
+        </div>
       </div>
-    </div>
-    ${isMulti ? `<div class="wizard-step-helper">Выбрано: <strong>${multiCount}</strong></div>` : ""}
-`;
+
+      ${isMulti ? `<div class="wizard-step-helper">Выбрано: <strong>${multiCount}</strong></div>` : ""}
+  `;
 
   if (step.type === "options" || step.type === "multi-options") {
     html += `<div class="option-list">`;
@@ -668,10 +686,11 @@ function renderWizard() {
     Boolean(state.wizard.values.propertyType);
 
   const currentStepValid = validateCurrentStep(false);
+  const showNext = shouldShowNextButton(step, value);
 
-  refs.wizardBackBtn.disabled = state.wizard.currentStepIndex === 0;
-  refs.wizardNextBtn.classList.toggle("hidden", realLastStep);
+  refs.wizardNextBtn.classList.toggle("hidden", realLastStep || !showNext);
   refs.wizardSubmitBtn.classList.toggle("hidden", !realLastStep);
+
   refs.wizardNextBtn.disabled = !currentStepValid;
   refs.wizardSubmitBtn.disabled = !currentStepValid;
 
@@ -697,6 +716,13 @@ function scheduleAutoAdvance() {
 function bindWizardStepEvents() {
   const step = getCurrentStep();
   if (!step) return;
+
+  const wizardStepBackLink = byId("wizardStepBackLink");
+  if (wizardStepBackLink) {
+    wizardStepBackLink.addEventListener("click", () => {
+      goBackStep();
+    });
+  }
 
   refs.wizardStepContainer.querySelectorAll("[data-option-value]").forEach((btn) => {
     btn.addEventListener("click", () => {
@@ -965,7 +991,6 @@ function bindWizardNavigation() {
     });
   }
 
-  if (refs.wizardBackBtn) refs.wizardBackBtn.addEventListener("click", goBackStep);
   if (refs.wizardNextBtn) refs.wizardNextBtn.addEventListener("click", goNextStep);
   if (refs.wizardSubmitBtn) refs.wizardSubmitBtn.addEventListener("click", submitWizard);
 }
