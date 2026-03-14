@@ -463,3 +463,38 @@
       align-items: flex-start;
     }
   }
+
+  :root {
+    --keyboard-offset: 0px;
+  }
+  
+  html,
+  body {
+    min-height: 100%;
+  }
+  
+  body.keyboard-open .bottom-nav {
+    display: none;
+  }
+  
+  body.keyboard-open .app {
+    padding-bottom: calc(20px + var(--keyboard-offset));
+  }
+  
+  .wizard-actions {
+    position: sticky;
+    bottom: calc(12px + env(safe-area-inset-bottom));
+    z-index: 20;
+    background: rgba(255, 255, 255, 0.96);
+    backdrop-filter: blur(12px);
+    padding-top: 12px;
+    padding-bottom: 4px;
+  }
+  
+  .input-stack input,
+  .input-stack textarea,
+  .field input,
+  .field textarea {
+    scroll-margin-bottom: 180px;
+  }
+  

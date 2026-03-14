@@ -145,6 +145,36 @@ function hideKeyboard() {
   }
 }
 
+function setupMobileKeyboardFix() {
+  const updateViewport = () => {
+    if (!window.visualViewport) return;
+
+    const keyboardHeight = Math.max(0, window.innerHeight - window.visualViewport.height);
+    document.documentElement.style.setProperty("--keyboard-offset", `${keyboardHeight}px`);
+    document.body.classList.toggle("keyboard-open", keyboardHeight > 120);
+  };
+
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener("resize", updateViewport);
+    window.visualViewport.addEventListener("scroll", updateViewport);
+  }
+
+  document.addEventListener("focusin", (event) => {
+    const target = event.target;
+    if (!(target instanceof HTMLInputElement) && !(target instanceof HTMLTextAreaElement)) return;
+
+    setTimeout(() => {
+      target.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 250);
+  });
+
+  document.addEventListener("focusout", () => {
+    setTimeout(updateViewport, 150);
+  });
+
+  updateViewport();
+}
+
 function bindHideKeyboardOnEnter(container = document) {
   container.querySelectorAll("input").forEach((el) => {
     el.addEventListener("keydown", (event) => {
@@ -318,165 +348,605 @@ function buildAutoTitle(payload) {
 }
 
 function getWizardSteps(values) {
-    const dealType = values.dealType;
-    const propertyType = values.propertyType;
-  
-    const base = [
+  const dealType = values.dealType;
+  const propertyType = values.propertyType;
+  const isCountryOutsideCity = values.countryLocation === "За городом";
+
+  const base = [
+    {
+      key: "dealType",
+      title: "Тип сделки",
+      hint: "Продажа или аренда.",
+      type: "options",
+      options: ["Продажа", "Аренда"],
+      required: true
+    },
+    {
+      key: "propertyType",
+      title: "Тип недвижимости",
+      hint: "Выберите тип объекта.",
+      type: "options",
+      options: ["Квартира", "Загородная недвижимость"],
+      required: true
+    }
+  ];
+
+  if (!dealType || !propertyType) return base;
+
+  if (propertyType === "Квартира" && dealType === "Продажа") {
+    return [
+      ...base,
       {
-        key: "dealType",
-        title: "Тип сделки",
-        hint: "Продажа или аренда.",
+        key: "market",
+        title: "Рынок",
         type: "options",
-        options: ["Продажа", "Аренда"],
+        options: ["Новостройка", "Вторичка", "Свой вариант"],
         required: true
       },
       {
-        key: "propertyType",
-        title: "Тип недвижимости",
-        hint: "Выберите тип объекта.",
+        key: "objectClass",
+        title: "Класс объекта недвижимости",
         type: "options",
-        options: ["Квартира", "Загородная недвижимость", "Коммерческая недвижимость"],
+        options: ["Эконом", "Комфорт", "Бизнес", "Элитное", "Свой вариант"],
+        required: true
+      },
+      {
+        key: "rooms",
+        title: "Количество комнат",
+        type: "options",
+        options: ["Студия", "1", "2", "3", "4+", "Свой вариант"],
+        required: true
+      },
+      {
+        key: "mortgage",
+        title: "Подходит для ипотеки?",
+        type: "options",
+        options: ["Да", "Нет", "Свой вариант"],
+        required: true
+      },
+      {
+        key: "area",
+        title: "Площадь объекта",
+        type: "input",
+        placeholder: "Например: 58",
+        required: true
+      },
+      {
+        key: "kitchenArea",
+        title: "Площадь кухни",
+        type: "input",
+        placeholder: "Например: 12",
+        required: true
+      },
+      {
+        key: "floor",
+        title: "Этаж расположения",
+        type: "input",
+        placeholder: "Например: 8",
+        required: true
+      },
+      {
+        key: "floorsTotal",
+        title: "Этажность здания",
+        type: "input",
+        placeholder: "Например: 17",
+        required: true
+      },
+      {
+        key: "bathroom",
+        title: "Санузел",
+        type: "options",
+        options: ["Совмещенный", "Раздельный", "Свой вариант"],
+        required: true
+      },
+      {
+        key: "windows",
+        title: "Окна",
+        type: "multi-options",
+        options: ["Во двор", "На улицу", "На солнечную сторону", "Разное", "Свой вариант"],
+        required: true
+      },
+      {
+        key: "houseType",
+        title: "Тип дома",
+        type: "options",
+        options: ["Кирпичный", "Монолитный", "Панельный", "Блочный", "Деревянный", "Свой вариант"],
+        required: true
+      },
+      {
+        key: "elevator",
+        title: "Лифт",
+        type: "options",
+        options: ["Нет", "Пассажирский", "Грузовой", "Оба", "Свой вариант"],
+        required: true
+      },
+      {
+        key: "parking",
+        title: "Парковка",
+        type: "options",
+        options: ["Подземная", "Надземная", "Многоуровневая", "Открытая во дворе", "За шлагбаумом", "Свой вариант"],
+        required: true
+      },
+      {
+        key: "repair",
+        title: "Ремонт",
+        type: "options",
+        options: ["Требуется", "Евро", "Коммерческий", "Дизайнерский", "Свой вариант"],
+        required: true
+      },
+      {
+        key: "layoutRooms",
+        title: "Планировка комнат",
+        type: "options",
+        options: ["Изолированные", "Смежные", "И то и другое", "Свой вариант"],
+        required: true
+      },
+      {
+        key: "balcony",
+        title: "Балкон/Лоджия",
+        type: "options",
+        options: ["Нет", "Балкон", "Лоджия", "Несколько", "Свой вариант"],
+        required: true
+      },
+      {
+        key: "ceilingHeight",
+        title: "Высота потолков (м)",
+        type: "input",
+        placeholder: "Например: 2.8",
+        required: false
+      },
+      {
+        key: "location",
+        title: "Локация",
+        type: "textarea",
+        placeholder: "Опишите местоположение объекта. Адрес",
+        required: true
+      },
+      {
+        key: "infrastructure",
+        title: "Ближайшие точки инфраструктуры",
+        type: "textarea",
+        placeholder: "Школы, сады, остановки, парки, достопримечательности",
+        required: true
+      },
+      {
+        key: "legal",
+        title: "Юридические особенности объекта",
+        type: "textarea",
+        placeholder: "Маткапитал, ипотека, аресты, готовность к заселению",
+        required: true
+      },
+      {
+        key: "comment",
+        title: "Свободный комментарий",
+        type: "textarea",
+        placeholder: "Детали планировки, состояние, окружение и прочее",
         required: true
       }
     ];
-  
-    if (!dealType || !propertyType) return base;
-  
-    if (propertyType === "Квартира" && dealType === "Продажа") {
-      return [
-        ...base,
-        { key: "market", title: "Рынок", type: "options", options: ["Новостройка", "Вторичка", "Свой вариант"], required: true },
-        { key: "objectClass", title: "Класс объекта недвижимости", type: "options", options: ["Эконом", "Комфорт", "Элитное", "Свой вариант"], required: true },
-        { key: "rooms", title: "Количество комнат", type: "options", options: ["Студия", "1", "2", "3", "4+", "Свой вариант"], required: true },
-        { key: "mortgage", title: "Подходит для ипотеки?", type: "options", options: ["Да", "Нет", "Свой вариант"], required: true },
-        { key: "area", title: "Площадь объекта", type: "input", placeholder: "Например: 58", required: true },
-        { key: "kitchenArea", title: "Площадь кухни", type: "input", placeholder: "Например: 12", required: true },
-        { key: "floor", title: "Этаж расположения", type: "input", placeholder: "Например: 8", required: true },
-        { key: "floorsTotal", title: "Этажность здания", type: "input", placeholder: "Например: 17", required: true },
-        { key: "bathroom", title: "Санузел", type: "options", options: ["Совмещенный", "Раздельный", "Свой вариант"], required: true },
-        { key: "windows", title: "Окна", type: "options", options: ["Во двор", "На улицу", "На солнечную сторону", "Разное", "Свой вариант"], required: true },
-        { key: "elevator", title: "Лифт", type: "options", options: ["Нет", "Пассажирский", "Грузовой", "Оба", "Свой вариант"], required: true },
-        { key: "parking", title: "Парковка", type: "options", options: ["Подземная", "Надземная", "Многоуровневая", "Открытая во дворе", "За шлагбаумом", "Свой вариант"], required: true },
-        { key: "repair", title: "Ремонт", type: "options", options: ["Требуется", "Евро", "Коммерческий", "Дизайнерский", "Свой вариант"], required: true },
-        { key: "layoutRooms", title: "Планировка комнат", type: "options", options: ["Изолированные", "Смежные", "И то и другое", "Свой вариант"], required: true },
-        { key: "balcony", title: "Балкон/Лоджия", type: "options", options: ["Нет", "Балкон", "Лоджия", "Несколько", "Свой вариант"], required: true },
-        { key: "ceilingHeight", title: "Высота потолков", type: "input", placeholder: "Можно пропустить", required: false },
-        { key: "location", title: "Локация", type: "textarea", placeholder: "Опишите местоположение объекта. Адрес", required: true },
-        { key: "infrastructure", title: "Ближайшие точки инфраструктуры", type: "textarea", placeholder: "Школы, сады, остановки, парки, достопримечательности", required: true },
-        { key: "legal", title: "Юридические особенности объекта", type: "textarea", placeholder: "Маткапитал, ипотека, аресты, готовность к заселению", required: true },
-        { key: "comment", title: "Свободный комментарий", type: "textarea", placeholder: "Детали планировки, состояние, окружение и прочее", required: false }
-      ];
-    }
-  
-    if (propertyType === "Квартира" && dealType === "Аренда") {
-      return [
-        ...base,
-        { key: "market", title: "Рынок", type: "options", options: ["Новостройка", "Вторичка", "Свой вариант"], required: true },
-        { key: "objectClass", title: "Класс объекта недвижимости", type: "options", options: ["Эконом", "Комфорт", "Элитное", "Свой вариант"], required: true },
-        { key: "rooms", title: "Количество комнат", type: "options", options: ["Студия", "1", "2", "3", "4+", "Свой вариант"], required: true },
-        { key: "area", title: "Площадь объекта", type: "input", placeholder: "Например: 42", required: true },
-        { key: "kitchenArea", title: "Площадь кухни", type: "input", placeholder: "Например: 9", required: false },
-        { key: "floor", title: "Этаж расположения", type: "input", placeholder: "Например: 5", required: true },
-        { key: "floorsTotal", title: "Этажность здания", type: "input", placeholder: "Например: 12", required: true },
-        { key: "bathroom", title: "Санузел", type: "options", options: ["Совмещенный", "Раздельный", "Свой вариант"], required: true },
-        { key: "windows", title: "Окна", type: "options", options: ["Во двор", "На улицу", "На солнечную сторону", "Разное", "Свой вариант"], required: false },
-        { key: "elevator", title: "Лифт", type: "options", options: ["Нет", "Пассажирский", "Грузовой", "Оба", "Свой вариант"], required: false },
-        { key: "parking", title: "Парковка", type: "options", options: ["Подземная", "Надземная", "Открытая во дворе", "За шлагбаумом", "Свой вариант"], required: false },
-        { key: "repair", title: "Ремонт", type: "options", options: ["Требуется", "Евро", "Дизайнерский", "Свой вариант"], required: true },
-        { key: "balcony", title: "Балкон/Лоджия", type: "options", options: ["Нет", "Балкон", "Лоджия", "Несколько", "Свой вариант"], required: false },
-        { key: "pets", title: "Можно с животными?", type: "options", options: ["Да", "Нет", "По договоренности", "Свой вариант"], required: false },
-        { key: "children", title: "Можно с детьми?", type: "options", options: ["Да", "Нет", "По договоренности", "Свой вариант"], required: false },
-        { key: "furniture", title: "Мебель и техника", type: "textarea", placeholder: "Что есть в квартире", required: false },
-        { key: "location", title: "Локация", type: "textarea", placeholder: "Опишите местоположение объекта. Адрес", required: true },
-        { key: "infrastructure", title: "Ближайшие точки инфраструктуры", type: "textarea", placeholder: "Школы, сады, остановки, парки, достопримечательности", required: true },
-        { key: "legal", title: "Условия аренды", type: "textarea", placeholder: "Залог, сроки, коммунальные, заселение", required: true },
-        { key: "comment", title: "Свободный комментарий", type: "textarea", placeholder: "Дополнительные детали", required: false }
-      ];
-    }
-  
-    if (propertyType === "Загородная недвижимость" && dealType === "Продажа") {
-      return [
-        ...base,
-        { key: "estateSubtype", title: "Тип загородного объекта", type: "options", options: ["Дом", "Коттедж", "Таунхаус", "Дача", "Участок", "Свой вариант"], required: true },
-        { key: "objectClass", title: "Класс объекта", type: "options", options: ["Эконом", "Комфорт", "Бизнес", "Элитное", "Свой вариант"], required: false },
-        { key: "area", title: "Площадь объекта", type: "input", placeholder: "Например: 140", required: true },
-        { key: "landArea", title: "Площадь участка", type: "input", placeholder: "Например: 8 соток", required: true },
-        { key: "floorsTotal", title: "Этажность", type: "input", placeholder: "Например: 2", required: false },
-        { key: "rooms", title: "Количество комнат / помещений", type: "options", options: ["1", "2", "3", "4+", "Свой вариант"], required: false },
-        { key: "houseCondition", title: "Состояние объекта", type: "options", options: ["Требуется ремонт", "Готов к проживанию", "После ремонта", "Свой вариант"], required: true },
-        { key: "communications", title: "Коммуникации", type: "textarea", placeholder: "Газ, вода, электричество, канализация, отопление", required: true },
-        { key: "road", title: "Подъезд и дорога", type: "textarea", placeholder: "Асфальт, грунт, круглогодичный подъезд", required: false },
-        { key: "parking", title: "Парковка / гараж", type: "options", options: ["Нет", "Парковка на участке", "Гараж", "Навес", "Свой вариант"], required: false },
-        { key: "mortgage", title: "Подходит для ипотеки?", type: "options", options: ["Да", "Нет", "Свой вариант"], required: false },
-        { key: "location", title: "Локация", type: "textarea", placeholder: "Поселок, район, ориентиры, адрес", required: true },
-        { key: "infrastructure", title: "Ближайшая инфраструктура", type: "textarea", placeholder: "Магазины, школы, водоемы, лес, остановки", required: true },
-        { key: "legal", title: "Юридические особенности", type: "textarea", placeholder: "Документы на дом и участок, границы, ипотека, обременения", required: true },
-        { key: "comment", title: "Свободный комментарий", type: "textarea", placeholder: "Материал дома, виды, баня, терраса, сад и др.", required: false }
-      ];
-    }
-  
-    if (propertyType === "Загородная недвижимость" && dealType === "Аренда") {
-      return [
-        ...base,
-        { key: "estateSubtype", title: "Тип загородного объекта", type: "options", options: ["Дом", "Коттедж", "Таунхаус", "Дача", "Свой вариант"], required: true },
-        { key: "area", title: "Площадь объекта", type: "input", placeholder: "Например: 120", required: true },
-        { key: "landArea", title: "Площадь участка", type: "input", placeholder: "Например: 6 соток", required: false },
-        { key: "floorsTotal", title: "Этажность", type: "input", placeholder: "Например: 2", required: false },
-        { key: "rooms", title: "Количество комнат", type: "options", options: ["1", "2", "3", "4+", "Свой вариант"], required: false },
-        { key: "houseCondition", title: "Состояние объекта", type: "options", options: ["Готов к проживанию", "После ремонта", "Свой вариант"], required: true },
-        { key: "communications", title: "Коммуникации", type: "textarea", placeholder: "Отопление, вода, интернет, электричество", required: true },
-        { key: "parking", title: "Парковка / гараж", type: "options", options: ["Нет", "Парковка на участке", "Гараж", "Навес", "Свой вариант"], required: false },
-        { key: "seasonality", title: "Сезонность аренды", type: "options", options: ["Круглый год", "Только лето", "Посуточно", "Долгосрочно", "Свой вариант"], required: true },
-        { key: "pets", title: "Можно с животными?", type: "options", options: ["Да", "Нет", "По договоренности", "Свой вариант"], required: false },
-        { key: "location", title: "Локация", type: "textarea", placeholder: "Поселок, район, ориентиры, адрес", required: true },
-        { key: "infrastructure", title: "Ближайшая инфраструктура", type: "textarea", placeholder: "Магазины, остановки, лес, водоемы, сервисы", required: true },
-        { key: "legal", title: "Условия аренды", type: "textarea", placeholder: "Срок аренды, залог, коммунальные платежи, заселение", required: true },
-        { key: "comment", title: "Свободный комментарий", type: "textarea", placeholder: "Баня, терраса, мангал, охрана, участок", required: false }
-      ];
-    }
-  
-    if (propertyType === "Коммерческая недвижимость" && dealType === "Продажа") {
-      return [
-        ...base,
-        { key: "commercialSubtype", title: "Тип коммерческого объекта", type: "options", options: ["Офис", "Торговое помещение", "Склад", "Производство", "Помещение свободного назначения", "Свой вариант"], required: true },
-        { key: "objectClass", title: "Класс объекта", type: "options", options: ["Эконом", "Комфорт", "Бизнес", "Премиум", "Свой вариант"], required: false },
-        { key: "area", title: "Площадь объекта", type: "input", placeholder: "Например: 215", required: true },
-        { key: "floor", title: "Этаж расположения", type: "input", placeholder: "Например: 1", required: false },
-        { key: "floorsTotal", title: "Этажность здания", type: "input", placeholder: "Например: 8", required: false },
-        { key: "repair", title: "Состояние / ремонт", type: "options", options: ["Требуется", "Офисный", "Коммерческий", "Дизайнерский", "Свой вариант"], required: true },
-        { key: "entrance", title: "Вход", type: "options", options: ["Общий", "Отдельный", "Несколько входов", "Свой вариант"], required: true },
-        { key: "parking", title: "Парковка", type: "options", options: ["Нет", "Гостевая", "Подземная", "Наземная", "Свой вариант"], required: false },
-        { key: "ceilingHeight", title: "Высота потолков", type: "input", placeholder: "Можно пропустить", required: false },
-        { key: "power", title: "Электрическая мощность", type: "input", placeholder: "Например: 30 кВт", required: false },
-        { key: "communications", title: "Коммуникации / оснащение", type: "textarea", placeholder: "Вентиляция, кондиционирование, отопление, интернет, вода", required: false },
-        { key: "location", title: "Локация", type: "textarea", placeholder: "Адрес, район, ориентиры, деловая активность", required: true },
-        { key: "infrastructure", title: "Окружение и трафик", type: "textarea", placeholder: "Транспорт, парковки, соседние бизнесы, пешеходный трафик", required: true },
-        { key: "legal", title: "Юридические особенности", type: "textarea", placeholder: "Собственность, арендаторы, обременения, документы", required: true },
-        { key: "comment", title: "Свободный комментарий", type: "textarea", placeholder: "Назначение, доходность, планировка, витрины, складская зона", required: false }
-      ];
-    }
-  
-    if (propertyType === "Коммерческая недвижимость" && dealType === "Аренда") {
-      return [
-        ...base,
-        { key: "commercialSubtype", title: "Тип коммерческого объекта", type: "options", options: ["Офис", "Торговое помещение", "Склад", "Производство", "Помещение свободного назначения", "Свой вариант"], required: true },
-        { key: "area", title: "Площадь объекта", type: "input", placeholder: "Например: 90", required: true },
-        { key: "floor", title: "Этаж расположения", type: "input", placeholder: "Например: 1", required: false },
-        { key: "floorsTotal", title: "Этажность здания", type: "input", placeholder: "Например: 4", required: false },
-        { key: "repair", title: "Состояние / ремонт", type: "options", options: ["Требуется", "Офисный", "Коммерческий", "Дизайнерский", "Свой вариант"], required: true },
-        { key: "entrance", title: "Вход", type: "options", options: ["Общий", "Отдельный", "Несколько входов", "Свой вариант"], required: true },
-        { key: "parking", title: "Парковка", type: "options", options: ["Нет", "Гостевая", "Подземная", "Наземная", "Свой вариант"], required: false },
-        { key: "power", title: "Электрическая мощность", type: "input", placeholder: "Например: 15 кВт", required: false },
-        { key: "communications", title: "Коммуникации / оснащение", type: "textarea", placeholder: "Вода, отопление, кондиционирование, вентиляция, интернет", required: false },
-        { key: "location", title: "Локация", type: "textarea", placeholder: "Адрес, район, ориентиры", required: true },
-        { key: "infrastructure", title: "Окружение и трафик", type: "textarea", placeholder: "Транспорт, парковки, соседи, поток клиентов", required: true },
-        { key: "legal", title: "Условия аренды", type: "textarea", placeholder: "Срок аренды, коммунальные, обеспечительный платеж, индексация", required: true },
-        { key: "comment", title: "Свободный комментарий", type: "textarea", placeholder: "Под какой бизнес подходит помещение", required: false }
-      ];
-    }
-  
-    return base;
   }
+
+  if (propertyType === "Квартира" && dealType === "Аренда") {
+    return [
+      ...base,
+      {
+        key: "objectClass",
+        title: "Класс объекта недвижимости",
+        type: "options",
+        options: ["Эконом", "Комфорт", "Бизнес", "Элитное", "Свой вариант"],
+        required: true
+      },
+      {
+        key: "rooms",
+        title: "Количество комнат",
+        type: "options",
+        options: ["Студия", "1", "2", "3", "4+", "Свой вариант"],
+        required: true
+      },
+      {
+        key: "area",
+        title: "Площадь объекта",
+        type: "input",
+        placeholder: "Например: 42",
+        required: true
+      },
+      {
+        key: "kitchenArea",
+        title: "Площадь кухни",
+        type: "input",
+        placeholder: "Например: 9",
+        required: false
+      },
+      {
+        key: "floor",
+        title: "Этаж расположения",
+        type: "input",
+        placeholder: "Например: 5",
+        required: true
+      },
+      {
+        key: "floorsTotal",
+        title: "Этажность здания",
+        type: "input",
+        placeholder: "Например: 12",
+        required: true
+      },
+      {
+        key: "bathroom",
+        title: "Санузел",
+        type: "options",
+        options: ["Совмещенный", "Раздельный", "Свой вариант"],
+        required: true
+      },
+      {
+        key: "windows",
+        title: "Окна",
+        type: "multi-options",
+        options: ["Во двор", "На улицу", "На солнечную сторону", "Разное", "Свой вариант"],
+        required: false
+      },
+      {
+        key: "houseType",
+        title: "Тип дома",
+        type: "options",
+        options: ["Кирпичный", "Монолитный", "Панельный", "Блочный", "Деревянный", "Свой вариант"],
+        required: false
+      },
+      {
+        key: "elevator",
+        title: "Лифт",
+        type: "options",
+        options: ["Нет", "Пассажирский", "Грузовой", "Оба", "Свой вариант"],
+        required: false
+      },
+      {
+        key: "parking",
+        title: "Парковка",
+        type: "options",
+        options: ["Подземная", "Надземная", "Открытая во дворе", "За шлагбаумом", "Свой вариант"],
+        required: false
+      },
+      {
+        key: "repair",
+        title: "Ремонт",
+        type: "options",
+        options: ["Требуется", "Евро", "Дизайнерский", "Свой вариант"],
+        required: true
+      },
+      {
+        key: "layoutRooms",
+        title: "Планировка комнат",
+        type: "options",
+        options: ["Изолированные", "Смежные", "И то и другое", "Свой вариант"],
+        required: true
+      },
+      {
+        key: "balcony",
+        title: "Балкон/Лоджия",
+        type: "options",
+        options: ["Нет", "Балкон", "Лоджия", "Несколько", "Свой вариант"],
+        required: false
+      },
+      {
+        key: "ceilingHeight",
+        title: "Высота потолков (м)",
+        type: "input",
+        placeholder: "Например: 2.7",
+        required: false
+      },
+      {
+        key: "pets",
+        title: "Можно с животными?",
+        type: "options",
+        options: ["Да", "Нет", "По договоренности", "Свой вариант"],
+        required: false
+      },
+      {
+        key: "children",
+        title: "Можно с детьми?",
+        type: "options",
+        options: ["Да", "Нет", "По договоренности", "Свой вариант"],
+        required: false
+      },
+      {
+        key: "furniture",
+        title: "Мебель и техника",
+        type: "textarea",
+        placeholder: "Что есть в квартире",
+        required: false
+      },
+      {
+        key: "location",
+        title: "Локация",
+        type: "textarea",
+        placeholder: "Опишите местоположение объекта. Адрес",
+        required: true
+      },
+      {
+        key: "infrastructure",
+        title: "Ближайшие точки инфраструктуры",
+        type: "textarea",
+        placeholder: "Школы, сады, остановки, парки, достопримечательности",
+        required: true
+      },
+      {
+        key: "comment",
+        title: "Свободный комментарий",
+        type: "textarea",
+        placeholder: "Дополнительные детали",
+        required: false
+      }
+    ];
+  }
+
+  if (propertyType === "Загородная недвижимость" && dealType === "Продажа") {
+    const steps = [
+      ...base,
+      {
+        key: "estateSubtype",
+        title: "Тип загородного объекта",
+        type: "options",
+        options: ["Дом", "Коттедж", "Таунхаус", "Дача", "Участок", "Свой вариант"],
+        required: true
+      },
+      {
+        key: "countryLocation",
+        title: "Где расположен объект?",
+        type: "options",
+        options: ["В черте города", "За городом", "Свой вариант"],
+        required: true
+      },
+      {
+        key: "objectClass",
+        title: "Класс объекта",
+        type: "options",
+        options: ["Эконом", "Комфорт", "Бизнес", "Элитное", "Свой вариант"],
+        required: false
+      },
+      {
+        key: "area",
+        title: "Площадь объекта",
+        type: "input",
+        placeholder: "Например: 140",
+        required: true
+      },
+      {
+        key: "landArea",
+        title: "Площадь участка",
+        type: "input",
+        placeholder: "Например: 8 соток",
+        required: true
+      },
+      {
+        key: "landCategory",
+        title: "Категория земель",
+        type: "options",
+        options: ["ИЖС", "Садоводство", "ЛПХ", "КФХ", "Иное", "Свой вариант"],
+        required: true
+      },
+      {
+        key: "floorsTotal",
+        title: "Этажность",
+        type: "input",
+        placeholder: "Например: 2",
+        required: false
+      },
+      {
+        key: "rooms",
+        title: "Количество комнат / помещений",
+        type: "options",
+        options: ["1", "2", "3", "4+", "Свой вариант"],
+        required: false
+      },
+      {
+        key: "bathroomLocation",
+        title: "Санузел",
+        type: "options",
+        options: ["В доме", "На улице", "Оба", "Свой вариант"],
+        required: true
+      },
+      {
+        key: "restFeatures",
+        title: "Для отдыха",
+        type: "multi-options",
+        options: ["Баня", "Бассейн", "Сауна", "Беседка", "Другое", "Свой вариант"],
+        required: false
+      },
+      {
+        key: "wallMaterial",
+        title: "Материал стен",
+        type: "options",
+        options: ["Кирпич", "Брус", "Бревно", "Газоблок", "Металл", "Иное", "Свой вариант"],
+        required: true
+      },
+      {
+        key: "houseCondition",
+        title: "Состояние объекта",
+        type: "options",
+        options: ["Требуется ремонт", "Готов к проживанию", "После ремонта", "Свой вариант"],
+        required: true
+      },
+      {
+        key: "communications",
+        title: "Коммуникации",
+        type: "textarea",
+        placeholder: "Газ, вода, электричество, канализация, отопление",
+        required: true
+      },
+      {
+        key: "road",
+        title: "Подъезд и дорога",
+        type: "textarea",
+        placeholder: "Асфальт, грунт, круглогодичный подъезд",
+        required: false
+      },
+      {
+        key: "parking",
+        title: "Парковка / гараж",
+        type: "options",
+        options: ["Нет", "Парковка на участке", "Гараж", "Навес", "Свой вариант"],
+        required: false
+      },
+      {
+        key: "mortgage",
+        title: "Подходит для ипотеки?",
+        type: "options",
+        options: ["Да", "Нет", "Свой вариант"],
+        required: false
+      },
+      {
+        key: "location",
+        title: "Локация",
+        type: "textarea",
+        placeholder: "Поселок, район, ориентиры, адрес",
+        required: true
+      },
+      {
+        key: "infrastructure",
+        title: "Ближайшая инфраструктура",
+        type: "textarea",
+        placeholder: "Магазины, школы, водоемы, лес, остановки",
+        required: true
+      },
+      {
+        key: "legal",
+        title: "Юридические особенности",
+        type: "textarea",
+        placeholder: "Документы на дом и участок, границы, ипотека, обременения",
+        required: true
+      },
+      {
+        key: "comment",
+        title: "Свободный комментарий",
+        type: "textarea",
+        placeholder: "Материал дома, виды, баня, терраса, сад и др.",
+        required: false
+      }
+    ];
+
+    if (isCountryOutsideCity) {
+      const insertIndex = steps.findIndex((s) => s.key === "objectClass");
+      steps.splice(insertIndex, 0, {
+        key: "distanceFromCity",
+        title: "Расстояние от города",
+        type: "input",
+        placeholder: "Например: 25 км",
+        required: true
+      });
+    }
+
+    return steps;
+  }
+
+  if (propertyType === "Загородная недвижимость" && dealType === "Аренда") {
+    return [
+      ...base,
+      {
+        key: "estateSubtype",
+        title: "Тип загородного объекта",
+        type: "options",
+        options: ["Дом", "Коттедж", "Таунхаус", "Дача", "Свой вариант"],
+        required: true
+      },
+      {
+        key: "area",
+        title: "Площадь объекта",
+        type: "input",
+        placeholder: "Например: 120",
+        required: true
+      },
+      {
+        key: "landArea",
+        title: "Площадь участка",
+        type: "input",
+        placeholder: "Например: 6 соток",
+        required: false
+      },
+      {
+        key: "floorsTotal",
+        title: "Этажность",
+        type: "input",
+        placeholder: "Например: 2",
+        required: false
+      },
+      {
+        key: "rooms",
+        title: "Количество комнат",
+        type: "options",
+        options: ["1", "2", "3", "4+", "Свой вариант"],
+        required: false
+      },
+      {
+        key: "houseCondition",
+        title: "Состояние объекта",
+        type: "options",
+        options: ["Готов к проживанию", "После ремонта", "Свой вариант"],
+        required: true
+      },
+      {
+        key: "communications",
+        title: "Коммуникации",
+        type: "textarea",
+        placeholder: "Отопление, вода, интернет, электричество",
+        required: true
+      },
+      {
+        key: "parking",
+        title: "Парковка / гараж",
+        type: "options",
+        options: ["Нет", "Парковка на участке", "Гараж", "Навес", "Свой вариант"],
+        required: false
+      },
+      {
+        key: "seasonality",
+        title: "Сезонность аренды",
+        type: "options",
+        options: ["Круглый год", "Только лето", "Посуточно", "Долгосрочно", "Свой вариант"],
+        required: true
+      },
+      {
+        key: "pets",
+        title: "Можно с животными?",
+        type: "options",
+        options: ["Да", "Нет", "По договоренности", "Свой вариант"],
+        required: false
+      },
+      {
+        key: "location",
+        title: "Локация",
+        type: "textarea",
+        placeholder: "Поселок, район, ориентиры, адрес",
+        required: true
+      },
+      {
+        key: "infrastructure",
+        title: "Ближайшая инфраструктура",
+        type: "textarea",
+        placeholder: "Магазины, остановки, лес, водоемы, сервисы",
+        required: true
+      },
+      {
+        key: "comment",
+        title: "Свободный комментарий",
+        type: "textarea",
+        placeholder: "Баня, терраса, мангал, охрана, участок",
+        required: false
+      }
+    ];
+  }
+
+  return base;
+}
+
+function isOwnVariantOption(step, value) {
+  if (!step?.options?.includes("Свой вариант")) return false;
+
+  if (step.type === "multi-options") {
+    return Array.isArray(value) && value.includes("Свой вариант");
+  }
+
+  return value === "Свой вариант";
+}
 
 function getCurrentSteps() {
   return getWizardSteps(state.wizard.values);
@@ -502,7 +972,7 @@ function renderWizard() {
   refs.wizardStepCounter.textContent = `${state.wizard.currentStepIndex + 1} / ${steps.length}`;
   refs.wizardProgressFill.style.width = `${((state.wizard.currentStepIndex + 1) / steps.length) * 100}%`;
 
-  const value = state.wizard.values[step.key] || "";
+  const value = state.wizard.values[step.key] ?? (step.type === "multi-options" ? [] : "");
   const needsCustomInput = isOwnVariantOption(step, value);
 
   let html = `
@@ -511,20 +981,26 @@ function renderWizard() {
       ${step.hint ? `<div class="wizard-hint">${escapeHtml(step.hint)}</div>` : ""}
   `;
 
-  if (step.type === "options") {
+  if (step.type === "options" || step.type === "multi-options") {
     html += `<div class="option-list">`;
+
     step.options.forEach((option) => {
-      const active = value === option ? "active" : "";
+      const active =
+        step.type === "multi-options"
+          ? Array.isArray(value) && value.includes(option)
+          : value === option;
+
       html += `
         <button
           type="button"
-          class="option-button ${active}"
+          class="option-button ${active ? "active" : ""}"
           data-option-value="${escapeHtml(option)}"
         >
           ${escapeHtml(option)}
         </button>
       `;
     });
+
     html += `</div>`;
 
     if (needsCustomInput) {
@@ -569,10 +1045,14 @@ function renderWizard() {
   html += `</div>`;
   refs.wizardStepContainer.innerHTML = html;
 
+  const realLastStep =
+    state.wizard.currentStepIndex === steps.length - 1 &&
+    Boolean(state.wizard.values.dealType) &&
+    Boolean(state.wizard.values.propertyType);
+
   refs.wizardBackBtn.disabled = state.wizard.currentStepIndex === 0;
-  const isLast = state.wizard.currentStepIndex === steps.length - 1;
-  refs.wizardNextBtn.classList.toggle("hidden", isLast);
-  refs.wizardSubmitBtn.classList.toggle("hidden", !isLast);
+  refs.wizardNextBtn.classList.toggle("hidden", realLastStep);
+  refs.wizardSubmitBtn.classList.toggle("hidden", !realLastStep);
 
   bindWizardStepEvents();
   bindHideKeyboardOnEnter(refs.wizardStepContainer);
@@ -585,23 +1065,55 @@ function bindWizardStepEvents() {
 
   refs.wizardStepContainer.querySelectorAll("[data-option-value]").forEach((btn) => {
     btn.addEventListener("click", () => {
-      state.wizard.values[step.key] = btn.dataset.optionValue;
+      const selectedValue = btn.dataset.optionValue;
 
-      if (btn.dataset.optionValue !== "Свой вариант") {
-        delete state.wizard.values[`${step.key}_custom`];
-      }
+      if (step.type === "multi-options") {
+        const current = Array.isArray(state.wizard.values[step.key]) ? [...state.wizard.values[step.key]] : [];
+        const exists = current.includes(selectedValue);
 
-      if (step.key === "dealType") {
-        state.wizard.values = { dealType: state.wizard.values.dealType };
-        state.wizard.currentStepIndex = 0;
-      }
+        state.wizard.values[step.key] = exists
+          ? current.filter((item) => item !== selectedValue)
+          : [...current, selectedValue];
 
-      if (step.key === "propertyType") {
-        state.wizard.values = {
-          dealType: state.wizard.values.dealType,
-          propertyType: state.wizard.values.propertyType
-        };
-        state.wizard.currentStepIndex = Math.min(state.wizard.currentStepIndex, getCurrentSteps().length - 1);
+        const hasOwnVariant = state.wizard.values[step.key].includes("Свой вариант");
+        if (!hasOwnVariant) {
+          delete state.wizard.values[`${step.key}_custom`];
+        }
+      } else {
+        state.wizard.values[step.key] = selectedValue;
+
+        if (selectedValue !== "Свой вариант") {
+          delete state.wizard.values[`${step.key}_custom`];
+        }
+
+        if (step.key === "dealType") {
+          state.wizard.values = { dealType: state.wizard.values.dealType };
+          state.wizard.currentStepIndex = 0;
+        }
+
+        if (step.key === "propertyType") {
+          state.wizard.values = {
+            dealType: state.wizard.values.dealType,
+            propertyType: state.wizard.values.propertyType
+          };
+          state.wizard.currentStepIndex = Math.min(
+            state.wizard.currentStepIndex,
+            getCurrentSteps().length - 1
+          );
+        }
+
+        if (step.key === "countryLocation") {
+          const dealType = state.wizard.values.dealType;
+          const propertyType = state.wizard.values.propertyType;
+          const countryLocation = state.wizard.values.countryLocation;
+
+          state.wizard.values = {
+            dealType,
+            propertyType,
+            ...state.wizard.values,
+            countryLocation
+          };
+        }
       }
 
       renderWizard();
@@ -637,7 +1149,14 @@ function getResolvedWizardValues() {
   const result = { ...state.wizard.values };
 
   Object.keys(result).forEach((key) => {
-    if (result[key] === "Свой вариант") {
+    if (Array.isArray(result[key])) {
+      result[key] = result[key].map((item) => {
+        if (item === "Свой вариант") {
+          return result[`${key}_custom`] || item;
+        }
+        return item;
+      });
+    } else if (result[key] === "Свой вариант") {
       const custom = result[`${key}_custom`];
       if (custom) result[key] = custom;
     }
@@ -662,6 +1181,14 @@ function validateCurrentStep() {
   if (step.type === "options") {
     if (!value) return false;
     if (value === "Свой вариант") {
+      return Boolean(String(values[`${step.key}_custom`] || "").trim());
+    }
+    return true;
+  }
+
+  if (step.type === "multi-options") {
+    if (!Array.isArray(value) || value.length === 0) return false;
+    if (value.includes("Свой вариант")) {
       return Boolean(String(values[`${step.key}_custom`] || "").trim());
     }
     return true;
@@ -887,6 +1414,7 @@ function init() {
   bindPlansForm();
   bindEnhanceForm();
   bindHistoryNavigation();
+  setupMobileKeyboardFix();
 
   renderListings();
   renderWizard();
