@@ -1,0 +1,892 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1, viewport-fit=cover"
+  />
+  <title>Подписка — Realty Mini App</title>
+  <meta name="theme-color" content="#17212b" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+    rel="stylesheet"
+  />
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    :root {
+      --bg: #f4f6f8;
+      --panel: #ffffff;
+      --panel-soft: #f1f5f9;
+      --panel-soft-2: #e8f1ff;
+      --text: #0f172a;
+      --muted: #64748b;
+      --border: #e2e8f0;
+      --primary: #3390ec;
+      --primary-dark: #2481dc;
+      --primary-contrast: #ffffff;
+      --success: #166534;
+      --success-soft: #ecfdf3;
+      --warning: #92400e;
+      --warning-soft: #fff7ed;
+      --shadow: 0 6px 24px rgba(15, 23, 42, 0.06);
+      --radius: 20px;
+    }
+
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+      min-height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    body {
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+    }
+
+    .app {
+      width: 100%;
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 16px 12px 32px;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      background: rgba(255, 255, 255, 0.92);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 8px 10px;
+      box-shadow: var(--shadow);
+      margin-bottom: 14px;
+    }
+
+    .topbar-main {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+    }
+
+    .avatar-circle {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: linear-gradient(180deg, #54a9ff 0%, #3390ec 100%);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 13px;
+      flex-shrink: 0;
+    }
+
+    .topbar-title {
+      font-size: 14px;
+      font-weight: 600;
+      line-height: 1.2;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .topbar-badge {
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: var(--panel-soft);
+      border: 1px solid var(--border);
+      font-size: 10px;
+      color: var(--muted);
+      flex-shrink: 0;
+    }
+
+    .hero-card,
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 22px;
+      box-shadow: var(--shadow);
+      padding: 16px;
+      margin-bottom: 14px;
+    }
+
+    .hero-card {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .hero-title {
+      margin: 0;
+      font-size: 24px;
+      line-height: 1.15;
+      font-weight: 700;
+    }
+
+    .hero-text {
+      margin: 0;
+      font-size: 14px;
+      line-height: 1.5;
+      color: var(--muted);
+    }
+
+    .hero-badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 8px 12px;
+      border-radius: 999px;
+      border: 1px solid #cfe3ff;
+      background: var(--panel-soft-2);
+      color: #1d4ed8;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .card-header h2 {
+      margin: 0 0 6px;
+      font-size: 18px;
+      line-height: 1.2;
+    }
+
+    .card-header p {
+      margin: 0 0 14px;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.45;
+    }
+
+    .features {
+      display: grid;
+      gap: 10px;
+    }
+
+    .feature-item {
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 12px 14px;
+      background: #fcfeff;
+    }
+
+    .feature-title {
+      font-weight: 700;
+      font-size: 14px;
+      margin-bottom: 4px;
+    }
+
+    .feature-text {
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.45;
+    }
+
+    .section-title {
+      margin: 0 0 12px;
+      font-size: 16px;
+      font-weight: 700;
+    }
+
+    .plans-grid {
+      display: grid;
+      gap: 12px;
+    }
+
+    .plan-card {
+      position: relative;
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 14px;
+      background: #fff;
+      cursor: pointer;
+      transition: 0.15s ease;
+    }
+
+    .plan-card:hover {
+      border-color: #bfdcff;
+      transform: translateY(-1px);
+    }
+
+    .plan-card.active {
+      background: var(--panel-soft-2);
+      border-color: #9ec8fb;
+      box-shadow: 0 0 0 3px rgba(51, 144, 236, 0.10);
+    }
+
+    .plan-card input {
+      position: absolute;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .plan-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .plan-name {
+      font-size: 16px;
+      font-weight: 700;
+      margin: 0 0 4px;
+    }
+
+    .plan-subtitle {
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.4;
+      margin: 0;
+    }
+
+    .plan-badge {
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: #fff7ed;
+      border: 1px solid #fed7aa;
+      color: #c2410c;
+      font-size: 11px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .plan-price {
+      font-size: 22px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .plan-price small {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--muted);
+    }
+
+    .plan-meta {
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.45;
+    }
+
+    .methods-grid {
+      display: grid;
+      gap: 10px;
+    }
+
+    .method-card {
+      position: relative;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 12px 14px;
+      background: #fff;
+      cursor: pointer;
+      transition: 0.15s ease;
+    }
+
+    .method-card.active {
+      background: var(--success-soft);
+      border-color: #86efac;
+      box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.10);
+    }
+
+    .method-card input {
+      position: absolute;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .method-title {
+      font-weight: 700;
+      font-size: 14px;
+      margin-bottom: 4px;
+    }
+
+    .method-text {
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.45;
+    }
+
+    .summary-box {
+      border: 1px dashed var(--border);
+      border-radius: 18px;
+      padding: 14px;
+      background: #fbfdff;
+    }
+
+    .summary-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 6px 0;
+      font-size: 14px;
+    }
+
+    .summary-row strong {
+      font-size: 15px;
+    }
+
+    .btn {
+      width: 100%;
+      border: 0;
+      border-radius: 14px;
+      padding: 12px 16px;
+      font: inherit;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s ease, transform 0.15s ease, opacity 0.15s ease;
+    }
+
+    .btn:hover {
+      transform: translateY(-1px);
+    }
+
+    .btn:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .btn-primary {
+      background: linear-gradient(180deg, var(--primary) 0%, var(--primary-dark) 100%);
+      color: var(--primary-contrast);
+    }
+
+    .btn-secondary {
+      background: var(--panel-soft);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+
+    .actions {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .status {
+      min-height: 20px;
+      font-size: 14px;
+      color: var(--muted);
+      line-height: 1.4;
+      margin-top: 10px;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .payment-link-box {
+      margin-top: 12px;
+      background: #0f172a;
+      color: #dbeafe;
+      border-radius: 16px;
+      padding: 14px;
+      font-size: 12px;
+      line-height: 1.5;
+      word-break: break-all;
+    }
+
+    .success-note {
+      margin-top: 12px;
+      padding: 12px 14px;
+      border-radius: 16px;
+      background: var(--success-soft);
+      border: 1px solid #86efac;
+      color: var(--success);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .warning-note {
+      margin-top: 12px;
+      padding: 12px 14px;
+      border-radius: 16px;
+      background: var(--warning-soft);
+      border: 1px solid #fdba74;
+      color: var(--warning);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    @media (min-width: 640px) {
+      .app {
+        padding: 18px 18px 40px;
+      }
+
+      .plans-grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+
+      .methods-grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+
+      .actions {
+        flex-direction: row;
+      }
+
+      .btn {
+        width: auto;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .topbar-badge {
+        display: none;
+      }
+
+      .hero-title {
+        font-size: 22px;
+      }
+    }
+  </style>
+
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+</head>
+<body>
+  <main class="app">
+    <header class="topbar">
+      <div class="topbar-main">
+        <div class="avatar-circle" id="userAvatar">П</div>
+        <div class="topbar-title" id="userName">Пользователь</div>
+      </div>
+      <div class="topbar-badge" id="userIdBadge">ID: demo-user</div>
+    </header>
+
+    <section class="hero-card">
+      <div>
+        <h1 class="hero-title">Подписка на Realty Mini App</h1>
+        <p class="hero-text">
+          Приложение помогает быстро создавать объявления о продаже и аренде недвижимости,
+          улучшать фото объектов и генерировать интерьер по планировке через AI.
+        </p>
+      </div>
+
+      <div class="hero-badges">
+        <div class="hero-badge">AI-генерация объявлений</div>
+        <div class="hero-badge">Улучшение фото</div>
+        <div class="hero-badge">Интерьер по плану</div>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="card-header">
+        <h2>Что входит в подписку</h2>
+        <p>Подписка открывает доступ ко всем основным AI-функциям приложения.</p>
+      </div>
+
+      <div class="features">
+        <div class="feature-item">
+          <div class="feature-title">Создание продающих объявлений</div>
+          <div class="feature-text">
+            Генерация текста объявления под тип сделки и тип недвижимости.
+          </div>
+        </div>
+
+        <div class="feature-item">
+          <div class="feature-title">Улучшение фото объекта</div>
+          <div class="feature-text">
+            Подготовка фото для публикации: свет, аккуратность, визуальная привлекательность.
+          </div>
+        </div>
+
+        <div class="feature-item">
+          <div class="feature-title">Генерация интерьера по планировке</div>
+          <div class="feature-text">
+            Возможность визуально показать будущий интерьер по плану помещения.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="card-header">
+        <h2>Выберите тариф</h2>
+        <p>Базовая цена — 500 ₽ в месяц. Чем длиннее период, тем удобнее пользоваться без продления.</p>
+      </div>
+
+      <div class="plans-grid" id="plansGrid">
+        <label class="plan-card active" data-plan="1m">
+          <input type="radio" name="plan" value="1m" checked />
+          <div class="plan-top">
+            <div>
+              <div class="plan-name">1 месяц</div>
+              <p class="plan-subtitle">Для теста и быстрого старта</p>
+            </div>
+          </div>
+          <div class="plan-price">500 ₽ <small>/ месяц</small></div>
+          <div class="plan-meta">Итого к оплате: 500 ₽</div>
+        </label>
+
+        <label class="plan-card" data-plan="6m">
+          <input type="radio" name="plan" value="6m" />
+          <div class="plan-top">
+            <div>
+              <div class="plan-name">6 месяцев</div>
+              <p class="plan-subtitle">Подходит для регулярной работы</p>
+            </div>
+            <div class="plan-badge">Популярный</div>
+          </div>
+          <div class="plan-price">500 ₽ <small>/ месяц</small></div>
+          <div class="plan-meta">Итого к оплате: 3 000 ₽</div>
+        </label>
+
+        <label class="plan-card" data-plan="12m">
+          <input type="radio" name="plan" value="12m" />
+          <div class="plan-top">
+            <div>
+              <div class="plan-name">12 месяцев</div>
+              <p class="plan-subtitle">Для долгосрочного использования</p>
+            </div>
+            <div class="plan-badge">Выгодно</div>
+          </div>
+          <div class="plan-price">500 ₽ <small>/ месяц</small></div>
+          <div class="plan-meta">Итого к оплате: 6 000 ₽</div>
+        </label>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="card-header">
+        <h2>Способ оплаты</h2>
+        <p>Выберите удобный способ, а затем сгенерируйте ссылку на оплату.</p>
+      </div>
+
+      <div class="methods-grid" id="methodsGrid">
+        <label class="method-card active" data-method="card">
+          <input type="radio" name="paymentMethod" value="card" checked />
+          <div class="method-title">Банковская карта</div>
+          <div class="method-text">Visa, MasterCard, Мир</div>
+        </label>
+
+        <label class="method-card" data-method="sbp">
+          <input type="radio" name="paymentMethod" value="sbp" />
+          <div class="method-title">СБП</div>
+          <div class="method-text">Оплата по ссылке или QR</div>
+        </label>
+
+        <label class="method-card" data-method="invoice">
+          <input type="radio" name="paymentMethod" value="invoice" />
+          <div class="method-title">Счет / ссылка</div>
+          <div class="method-text">Для ручной отправки клиенту</div>
+        </label>
+      </div>
+
+      <div class="warning-note">
+        На этой странице кнопка только генерирует платежную ссылку через backend / Activepieces.
+        Саму оплату и подтверждение подписки потом нужно будет привязать к платежному провайдеру.
+      </div>
+    </section>
+
+    <section class="card">
+      <h3 class="section-title">Итог</h3>
+
+      <div class="summary-box">
+        <div class="summary-row">
+          <span>Тариф</span>
+          <strong id="summaryPlan">1 месяц</strong>
+        </div>
+        <div class="summary-row">
+          <span>Способ оплаты</span>
+          <strong id="summaryMethod">Банковская карта</strong>
+        </div>
+        <div class="summary-row">
+          <span>Сумма</span>
+          <strong id="summaryAmount">500 ₽</strong>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button class="btn btn-primary" type="button" id="generatePaymentLinkBtn">
+          Сгенерировать ссылку на оплату
+        </button>
+        <button class="btn btn-secondary" type="button" id="openMainAppBtn">
+          Перейти в приложение
+        </button>
+      </div>
+
+      <div class="status" id="paymentStatus"></div>
+      <div class="payment-link-box" id="paymentLinkBox" style="display:none;"></div>
+      <div class="success-note" id="paymentSuccessNote" style="display:none;"></div>
+    </section>
+  </main>
+
+  <script>
+    const WEBHOOK_URL = "https://cloud.activepieces.com/api/v1/webhooks/dhNXQ0rS4B2NDDmPOPTig";
+
+    const tg = window.Telegram?.WebApp;
+    if (tg) {
+      tg.ready();
+      tg.expand();
+    }
+
+    const currentUser = {
+      telegramUserId: String(tg?.initDataUnsafe?.user?.id || "demo-user"),
+      username: tg?.initDataUnsafe?.user?.username || "",
+      firstName: tg?.initDataUnsafe?.user?.first_name || "Пользователь",
+      lastName: tg?.initDataUnsafe?.user?.last_name || "",
+      languageCode: tg?.initDataUnsafe?.user?.language_code || "ru"
+    };
+
+    const planMap = {
+      "1m": {
+        code: "1m",
+        title: "1 месяц",
+        months: 1,
+        monthlyPrice: 500,
+        totalAmount: 500
+      },
+      "6m": {
+        code: "6m",
+        title: "6 месяцев",
+        months: 6,
+        monthlyPrice: 500,
+        totalAmount: 3000
+      },
+      "12m": {
+        code: "12m",
+        title: "12 месяцев",
+        months: 12,
+        monthlyPrice: 500,
+        totalAmount: 6000
+      }
+    };
+
+    const paymentMethodMap = {
+      card: {
+        code: "card",
+        title: "Банковская карта"
+      },
+      sbp: {
+        code: "sbp",
+        title: "СБП"
+      },
+      invoice: {
+        code: "invoice",
+        title: "Счет / ссылка"
+      }
+    };
+
+    const state = {
+      selectedPlan: "1m",
+      selectedPaymentMethod: "card"
+    };
+
+    function byId(id) {
+      return document.getElementById(id);
+    }
+
+    const refs = {
+      userAvatar: byId("userAvatar"),
+      userName: byId("userName"),
+      userIdBadge: byId("userIdBadge"),
+
+      plansGrid: byId("plansGrid"),
+      methodsGrid: byId("methodsGrid"),
+
+      summaryPlan: byId("summaryPlan"),
+      summaryMethod: byId("summaryMethod"),
+      summaryAmount: byId("summaryAmount"),
+
+      generatePaymentLinkBtn: byId("generatePaymentLinkBtn"),
+      openMainAppBtn: byId("openMainAppBtn"),
+      paymentStatus: byId("paymentStatus"),
+      paymentLinkBox: byId("paymentLinkBox"),
+      paymentSuccessNote: byId("paymentSuccessNote")
+    };
+
+    if (refs.userName) refs.userName.textContent = currentUser.firstName;
+    if (refs.userIdBadge) refs.userIdBadge.textContent = `ID: ${currentUser.telegramUserId}`;
+    if (refs.userAvatar) refs.userAvatar.textContent = (currentUser.firstName || "П").trim().charAt(0).toUpperCase();
+
+    function formatAmount(value) {
+      return `${Number(value).toLocaleString("ru-RU")} ₽`;
+    }
+
+    function getBasePayload(route) {
+      return {
+        route,
+        telegramUserId: currentUser.telegramUserId,
+        username: currentUser.username,
+        firstName: currentUser.firstName,
+        lastName: currentUser.lastName,
+        languageCode: currentUser.languageCode,
+        initData: tg?.initData || "",
+        sentAt: new Date().toISOString()
+      };
+    }
+
+    async function postJson(body) {
+      const response = await fetch(WEBHOOK_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(body)
+      });
+
+      const contentType = response.headers.get("content-type") || "";
+      const data = contentType.includes("application/json")
+        ? await response.json()
+        : await response.text();
+
+      if (!response.ok) {
+        throw new Error(typeof data === "string" ? data : JSON.stringify(data));
+      }
+
+      return data;
+    }
+
+    function updateSummary() {
+      const plan = planMap[state.selectedPlan];
+      const method = paymentMethodMap[state.selectedPaymentMethod];
+
+      refs.summaryPlan.textContent = plan.title;
+      refs.summaryMethod.textContent = method.title;
+      refs.summaryAmount.textContent = formatAmount(plan.totalAmount);
+    }
+
+    function syncPlanCards() {
+      document.querySelectorAll(".plan-card").forEach((card) => {
+        const isActive = card.dataset.plan === state.selectedPlan;
+        card.classList.toggle("active", isActive);
+
+        const input = card.querySelector('input[name="plan"]');
+        if (input) input.checked = isActive;
+      });
+    }
+
+    function syncMethodCards() {
+      document.querySelectorAll(".method-card").forEach((card) => {
+        const isActive = card.dataset.method === state.selectedPaymentMethod;
+        card.classList.toggle("active", isActive);
+
+        const input = card.querySelector('input[name="paymentMethod"]');
+        if (input) input.checked = isActive;
+      });
+    }
+
+    function bindPlanSelection() {
+      document.querySelectorAll(".plan-card").forEach((card) => {
+        card.addEventListener("click", () => {
+          state.selectedPlan = card.dataset.plan;
+          syncPlanCards();
+          updateSummary();
+        });
+      });
+    }
+
+    function bindMethodSelection() {
+      document.querySelectorAll(".method-card").forEach((card) => {
+        card.addEventListener("click", () => {
+          state.selectedPaymentMethod = card.dataset.method;
+          syncMethodCards();
+          updateSummary();
+        });
+      });
+    }
+
+    function buildCreatePaymentPayload() {
+      const plan = planMap[state.selectedPlan];
+      const method = paymentMethodMap[state.selectedPaymentMethod];
+
+      return {
+        ...getBasePayload("create-payment-link"),
+        paymentContext: "subscription",
+        payloadJson: {
+          subscriptionPlan: plan.code,
+          subscriptionTitle: plan.title,
+          subscriptionMonths: plan.months,
+          monthlyPrice: plan.monthlyPrice,
+          amount: plan.totalAmount,
+          currency: "RUB",
+          paymentMethod: method.code,
+          paymentMethodTitle: method.title,
+          description: `Подписка Realty Mini App на ${plan.title}`
+        }
+      };
+    }
+
+    async function generatePaymentLink() {
+      refs.paymentStatus.textContent = "Генерация ссылки на оплату...";
+      refs.paymentLinkBox.style.display = "none";
+      refs.paymentSuccessNote.style.display = "none";
+      refs.paymentLinkBox.textContent = "";
+      refs.paymentSuccessNote.textContent = "";
+      refs.generatePaymentLinkBtn.disabled = true;
+
+      const body = buildCreatePaymentPayload();
+
+      try {
+        const result = await postJson(body);
+
+        const paymentUrl =
+          result?.paymentUrl ||
+          result?.payment_url ||
+          result?.url ||
+          result?.link ||
+          "";
+
+        refs.paymentStatus.textContent = paymentUrl
+          ? "Ссылка на оплату успешно сгенерирована."
+          : "Запрос отправлен. Backend вернул ответ без ссылки.";
+
+        if (paymentUrl) {
+          refs.paymentLinkBox.style.display = "block";
+          refs.paymentLinkBox.textContent = paymentUrl;
+
+          refs.paymentSuccessNote.style.display = "block";
+          refs.paymentSuccessNote.textContent =
+            "Откройте ссылку выше для оплаты. После подтверждения оплаты backend должен активировать подписку пользователю.";
+        } else {
+          refs.paymentLinkBox.style.display = "block";
+          refs.paymentLinkBox.textContent = JSON.stringify(result, null, 2);
+        }
+      } catch (error) {
+        refs.paymentStatus.textContent = `Ошибка: ${error.message}`;
+      } finally {
+        refs.generatePaymentLinkBtn.disabled = false;
+      }
+    }
+
+    function bindActions() {
+      refs.generatePaymentLinkBtn.addEventListener("click", generatePaymentLink);
+
+      refs.openMainAppBtn.addEventListener("click", () => {
+        window.location.href = "./index.html";
+      });
+    }
+
+    function init() {
+      updateSummary();
+      syncPlanCards();
+      syncMethodCards();
+      bindPlanSelection();
+      bindMethodSelection();
+      bindActions();
+    }
+
+    document.addEventListener("DOMContentLoaded", init);
+  </script>
+</body>
+</html>
