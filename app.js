@@ -981,7 +981,11 @@ function renderWizard() {
 
   let html = `
     <div class="wizard-step">
-      <div class="wizard-question">${escapeHtml(step.title)}</div>
+      <div class="wizard-step-head">
+        ${step.required ? `<span class="wizard-step-chip wizard-step-chip-required">Обязательное</span>` : ""}
+        ${step.type === "multi-options" ? `<span class="wizard-step-chip wizard-step-chip-multi">Несколько вариантов</span>` : ""}
+        <div class="wizard-question">${escapeHtml(step.title)}</div>
+      </div>
   `;
 
   if (step.type === "options" || step.type === "multi-options") {
@@ -1071,9 +1075,14 @@ function renderWizard() {
     Boolean(state.wizard.values.dealType) &&
     Boolean(state.wizard.values.propertyType);
 
+  const currentStepValid = validateCurrentStep(false);
+
   refs.wizardBackBtn.disabled = state.wizard.currentStepIndex === 0;
   refs.wizardNextBtn.classList.toggle("hidden", realLastStep);
   refs.wizardSubmitBtn.classList.toggle("hidden", !realLastStep);
+
+  refs.wizardNextBtn.disabled = !currentStepValid;
+  refs.wizardSubmitBtn.disabled = !currentStepValid;
 
   bindWizardStepEvents();
   bindHideKeyboardOnEnter(refs.wizardStepContainer);
@@ -1208,7 +1217,7 @@ function getResolvedWizardValues() {
   return result;
 }
 
-function validateCurrentStep() {
+function validateCurrentStep(markInvalid = true) {
   const step = getCurrentStep();
   if (!step) return true;
 
@@ -1216,7 +1225,7 @@ function validateCurrentStep() {
   const value = values[step.key];
 
   if (!step.required) {
-    state.wizard.invalidStepKey = null;
+    if (markInvalid) state.wizard.invalidStepKey = null;
     return true;
   }
 
@@ -1236,7 +1245,10 @@ function validateCurrentStep() {
     isValid = Boolean(String(value || "").trim());
   }
 
-  state.wizard.invalidStepKey = isValid ? null : step.key;
+  if (markInvalid) {
+    state.wizard.invalidStepKey = isValid ? null : step.key;
+  }
+
   return isValid;
 }
 
@@ -1268,15 +1280,15 @@ function goNextStep() {
   hideKeyboard();
 
   if (!validateCurrentStep()) {
-    if (refs.wizardStatus) refs.wizardStatus.textContent = "Пожалуйста, заполните текущий шаг.";
+    renderWizard();
     return;
   }
 
-  if (refs.wizardStatus) refs.wizardStatus.textContent = "";
   const steps = getCurrentSteps();
 
   if (state.wizard.currentStepIndex < steps.length - 1) {
     state.wizard.currentStepIndex += 1;
+    state.wizard.invalidStepKey = null;
     renderWizard();
   }
 }
@@ -1295,7 +1307,7 @@ async function submitWizard() {
   hideKeyboard();
 
   if (!validateCurrentStep()) {
-    if (refs.wizardStatus) refs.wizardStatus.textContent = "Пожалуйста, заполните текущий шаг.";
+    renderWizard();
     return;
   }
 
