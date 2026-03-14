@@ -15,7 +15,8 @@ const state = {
   listings: [],
   wizard: {
     currentStepIndex: 0,
-    values: {}
+    values: {},
+    invalidStepKey: null
   },
   appScreen: "listings",
   listingSubScreen: "list"
@@ -976,25 +977,17 @@ function renderWizard() {
 
   const value = state.wizard.values[step.key] ?? (step.type === "multi-options" ? [] : "");
   const needsCustomInput = isOwnVariantOption(step, value);
-  const errorText = refs.wizardStatus?.textContent?.trim() || "";
+  const hasValidationError = state.wizard.invalidStepKey === step.key;
 
   let html = `
     <div class="wizard-step">
-      ${errorText ? `<div class="wizard-status-top">${escapeHtml(errorText)}</div>` : ""}
       <div class="wizard-question">${escapeHtml(step.title)}</div>
-      ${step.hint ? `<div class="wizard-hint">${escapeHtml(step.hint)}</div>` : ""}
-      <div class="wizard-meta">
-        ${step.type === "multi-options" ? `<div class="wizard-badge wizard-badge-multi">Можно выбрать несколько</div>` : ""}
-        ${step.required ? `<div class="wizard-badge wizard-badge-required">Обязательное поле</div>` : ""}
-      </div>
   `;
 
   if (step.type === "options" || step.type === "multi-options") {
     html += `<div class="option-list">`;
 
-    const shouldShowOnlyCustom =
-      needsCustomInput &&
-      (step.type === "options" || step.type === "multi-options");
+    const shouldShowOnlyCustom = needsCustomInput;
 
     step.options.forEach((option) => {
       if (shouldShowOnlyCustom && option !== "Свой вариант") {
@@ -1009,7 +1002,7 @@ function renderWizard() {
       html += `
         <button
           type="button"
-          class="option-button ${active ? "active" : ""} ${step.type === "multi-options" ? "multi-option" : ""}"
+          class="option-button ${active ? "active" : ""}"
           data-option-value="${escapeHtml(option)}"
         >
           ${escapeHtml(option)}
@@ -1022,10 +1015,17 @@ function renderWizard() {
     if (needsCustomInput) {
       const customKey = `${step.key}_custom`;
       const customValue = state.wizard.values[customKey] || "";
+      const customHasError = hasValidationError && !String(customValue).trim();
+
       html += `
         <div class="input-stack">
-          <label for="customValueInput">Введите свой вариант</label>
-          <input id="customValueInput" type="text" value="${escapeHtml(customValue)}" placeholder="Введите значение" />
+          <input
+            id="customValueInput"
+            class="${customHasError ? "input-error" : ""}"
+            type="text"
+            value="${escapeHtml(customValue)}"
+            placeholder="${customHasError ? "Обязательно для заполнения" : "Свой вариант"}"
+          />
         </div>
         <button type="button" class="back-link" id="resetCustomOptionBtn">← Вернуться к вариантам</button>
       `;
@@ -1035,12 +1035,14 @@ function renderWizard() {
   if (step.type === "input") {
     html += `
       <div class="input-stack">
-        <label for="wizardInput">${escapeHtml(step.title)}</label>
         <input
           id="wizardInput"
+          class="${hasValidationError ? "input-error" : ""}"
           type="text"
           value="${escapeHtml(value)}"
-          placeholder="${escapeHtml(step.placeholder || "")}"
+          placeholder="${escapeHtml(
+            hasValidationError ? "Обязательно для заполнения" : (step.placeholder || "")
+          )}"
         />
       </div>
     `;
@@ -1049,11 +1051,13 @@ function renderWizard() {
   if (step.type === "textarea") {
     html += `
       <div class="input-stack">
-        <label for="wizardTextarea">${escapeHtml(step.title)}</label>
         <textarea
           id="wizardTextarea"
+          class="${hasValidationError ? "input-error" : ""}"
           rows="5"
-          placeholder="${escapeHtml(step.placeholder || "")}"
+          placeholder="${escapeHtml(
+            hasValidationError ? "Обязательно для заполнения" : (step.placeholder || "")
+          )}"
         >${escapeHtml(value)}</textarea>
       </div>
     `;
@@ -1132,7 +1136,7 @@ function bindWizardStepEvents() {
           };
         }
       }
-
+      state.wizard.invalidStepKey = null;
       renderWizard();
     });
   });
@@ -1156,6 +1160,7 @@ function bindWizardStepEvents() {
   if (customInput) {
     customInput.addEventListener("input", (e) => {
       state.wizard.values[`${step.key}_custom`] = e.target.value;
+      state.wizard.invalidStepKey = null;
       renderPayloadPreview();
     });
   }
@@ -1164,6 +1169,7 @@ function bindWizardStepEvents() {
   if (input) {
     input.addEventListener("input", (e) => {
       state.wizard.values[step.key] = e.target.value;
+      state.wizard.invalidStepKey = null;
       renderPayloadPreview();
     });
   }
@@ -1172,6 +1178,7 @@ function bindWizardStepEvents() {
   if (textarea) {
     textarea.addEventListener("input", (e) => {
       state.wizard.values[step.key] = e.target.value;
+      state.wizard.invalidStepKey = null;
       renderPayloadPreview();
     });
   }
@@ -1208,25 +1215,29 @@ function validateCurrentStep() {
   const values = state.wizard.values;
   const value = values[step.key];
 
-  if (!step.required) return true;
+  if (!step.required) {
+    state.wizard.invalidStepKey = null;
+    return true;
+  }
+
+  let isValid = true;
 
   if (step.type === "options") {
-    if (!value) return false;
-    if (value === "Свой вариант") {
-      return Boolean(String(values[`${step.key}_custom`] || "").trim());
+    isValid = Boolean(value);
+    if (isValid && value === "Свой вариант") {
+      isValid = Boolean(String(values[`${step.key}_custom`] || "").trim());
     }
-    return true;
+  } else if (step.type === "multi-options") {
+    isValid = Array.isArray(value) && value.length > 0;
+    if (isValid && value.includes("Свой вариант")) {
+      isValid = Boolean(String(values[`${step.key}_custom`] || "").trim());
+    }
+  } else {
+    isValid = Boolean(String(value || "").trim());
   }
 
-  if (step.type === "multi-options") {
-    if (!Array.isArray(value) || value.length === 0) return false;
-    if (value.includes("Свой вариант")) {
-      return Boolean(String(values[`${step.key}_custom`] || "").trim());
-    }
-    return true;
-  }
-
-  return Boolean(String(value || "").trim());
+  state.wizard.invalidStepKey = isValid ? null : step.key;
+  return isValid;
 }
 
 function buildListingPayloadFromWizard() {
@@ -1248,6 +1259,7 @@ function renderPayloadPreview() {
 function resetWizard() {
   state.wizard.currentStepIndex = 0;
   state.wizard.values = {};
+  state.wizard.invalidStepKey = null;
   if (refs.wizardStatus) refs.wizardStatus.textContent = "";
   renderWizard();
 }

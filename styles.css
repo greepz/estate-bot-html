@@ -240,29 +240,11 @@ body {
   color: var(--danger);
 }
 
-.btn-back-inline {
-  width: auto;
-  padding-inline: 14px;
-}
-
 .status {
   min-height: 20px;
   font-size: 14px;
   color: var(--muted);
   line-height: 1.4;
-}
-
-.wizard-status-top {
-  min-height: 20px;
-  margin-bottom: 10px;
-  font-size: 14px;
-  line-height: 1.4;
-  color: var(--danger);
-  font-weight: 600;
-}
-
-.wizard-status-top:empty {
-  display: none;
 }
 
 #wizardStatus {
@@ -369,43 +351,6 @@ body {
   line-height: 1.3;
 }
 
-.wizard-hint {
-  font-size: 13px;
-  color: var(--muted);
-  line-height: 1.5;
-}
-
-.wizard-meta {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-  margin-top: -2px;
-}
-
-.wizard-badge {
-  display: inline-flex;
-  align-items: center;
-  min-height: 28px;
-  padding: 6px 10px;
-  border-radius: 999px;
-  font-size: 12px;
-  font-weight: 600;
-  border: 1px solid transparent;
-}
-
-.wizard-badge-multi {
-  background: #e8f1ff;
-  border-color: #cfe3ff;
-  color: #1d4ed8;
-}
-
-.wizard-badge-required {
-  background: #fff7ed;
-  border-color: #fed7aa;
-  color: #c2410c;
-}
-
 .option-list {
   display: flex;
   flex-direction: column;
@@ -430,11 +375,6 @@ body {
   box-shadow: 0 0 0 3px rgba(51, 144, 236, 0.12);
 }
 
-.option-button.multi-option::after,
-.option-button.active.multi-option::after {
-  content: none;
-}
-
 .input-stack,
 .form-stack,
 .field {
@@ -445,8 +385,7 @@ body {
 
 .field label,
 .input-stack label {
-  font-size: 14px;
-  font-weight: 600;
+  display: none;
 }
 
 .input-stack input,
@@ -471,6 +410,15 @@ body {
 .field textarea:focus {
   border-color: #8fc1ff;
   box-shadow: 0 0 0 4px rgba(51, 144, 236, 0.12);
+}
+
+.input-error {
+  border-color: var(--danger) !important;
+  box-shadow: 0 0 0 4px rgba(220, 38, 38, 0.12) !important;
+}
+
+.input-error::placeholder {
+  color: var(--danger);
 }
 
 .wizard-actions {
