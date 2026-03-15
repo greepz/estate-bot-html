@@ -1,4 +1,5 @@
 const WEBHOOK_URL = "https://cloud.activepieces.com/api/v1/webhooks/dhNXQ0rS4B2NDDmPOPTig";
+const SYNC_WEBHOOK_URL = "https://cloud.activepieces.com/api/v1/webhooks/dhNXQ0rS4B2NDDmPOPTig/sync";
 
 const tg = window.Telegram?.WebApp;
 if (tg) {
@@ -56,6 +57,8 @@ const refs = {
   plansForm: byId("plansForm"),
   plansStatus: byId("plansStatus"),
 
+  testInitDataBtn: byId("testInitDataBtn"),
+
   enhanceForm: byId("enhanceForm"),
   enhanceStatus: byId("enhanceStatus")
 };
@@ -76,7 +79,7 @@ function escapeHtml(value) {
 }
 
 async function postJson(body) {
-  const response = await fetch(WEBHOOK_URL, {
+  const response = await fetch(SYNC_WEBHOOK_URL, {
     method: "POST",
     headers: {
       "Content-Type": "application/json"
@@ -94,6 +97,29 @@ async function postJson(body) {
   }
 
   return data;
+}
+
+async function testInitData() {
+  if (!refs.listingStatus) return;
+
+  refs.listingStatus.textContent = "Проверка initData...";
+
+  try {
+    const result = await postJson({
+      route: "test-init-data",
+      telegramUserId: currentUser.id,
+      firstName: currentUser.firstName,
+      initData: tg?.initData || "",
+      sentAt: new Date().toISOString()
+    });
+
+    refs.listingStatus.textContent =
+      typeof result === "string"
+        ? `Ответ sync webhook: ${result}`
+        : `Ответ sync webhook: ${JSON.stringify(result)}`;
+  } catch (error) {
+    refs.listingStatus.textContent = `Ошибка проверки initData: ${error.message}`;
+  }
 }
 
 function shouldShowNextButton(step, value) {
@@ -983,6 +1009,10 @@ function bindWizardNavigation() {
       resetWizard();
       goToListingCreate();
     });
+  }
+
+  if (refs.testInitDataBtn) {
+    refs.testInitDataBtn.addEventListener("click", testInitData);
   }
 
   if (refs.backToListingsBtn) {
